@@ -68,10 +68,15 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
         setRca(null);
 
         let auditData: any;
-        if (activeAudit === AuditType.PostLive) auditData = { website: inputs.website, gmb: inputs.gmb, facebook: inputs.facebook, other_data: inputs.otherData };
-        else if (activeAudit === AuditType.Cancellation) auditData = { website: inputs.website, gmb: inputs.gmb };
-        else if (activeAudit === AuditType.GmbBulk) auditData = inputs.bulkData;
-        else return;
+        if (activeAudit === AuditType.PostLive) {
+            auditData = { website: inputs.website, gmb: inputs.gmb, facebook: inputs.facebook, other_data: inputs.otherData };
+        } else if (activeAudit === AuditType.Cancellation) {
+            auditData = { website: inputs.website, gmb: inputs.gmb };
+        } else if (activeAudit === AuditType.GmbBulk) {
+            auditData = inputs.bulkData;
+        } else {
+            return;
+        }
 
         try {
             const auditResults = await performAudit(activeAudit, auditData);
@@ -88,7 +93,9 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
 
     const generateRca = useCallback(async () => {
         if (!results) return;
-        const failedItems = results.filter(r => (r.status === 'FAIL' || r.status === 'SUSPICIOUS'));
+        const failedItems = results.filter((r) => {
+            return r.status === 'FAIL' || r.status === 'SUSPICIOUS';
+        });
         if (failedItems.length === 0) return;
 
         setIsRcaLoading(true);
@@ -116,7 +123,9 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
     const hasResults = (results !== null && results.length !== 0);
     const allPassed = (results !== null && results.length === 0);
     const isCancellationAudit = (activeAudit === AuditType.Cancellation);
-    const hasAuditFailures = (results !== null && results.some(r => (r.status === 'FAIL' || r.status === 'SUSPICIOUS')));
+    const hasAuditFailures = (results !== null && results.some((r) => {
+        return r.status === 'FAIL' || r.status === 'SUSPICIOUS';
+    }));
 
     return (
         <section id="audit">
