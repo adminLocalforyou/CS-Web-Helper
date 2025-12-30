@@ -123,19 +123,21 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
             <p className="text-gray-600 mb-6">Tools to assist with monthly quality audits across various operational checks.</p>
 
             <div className="flex flex-wrap border-b border-gray-200 mb-6">
-                 {auditTabs.map(tab => (
-                     <button 
-                        key={tab.id}
-                        onClick={() => setActiveAudit(tab.id)} 
-                        className={`px-4 py-3 text-sm font-semibold border-b-2 transition ${
-                            activeAudit === tab.id 
-                            ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
-                            : 'border-transparent text-gray-600 hover:border-gray-300'
-                        }`}
-                    >
-                        {tab.label}
-                    </button>
-                 ))}
+                 {auditTabs.map((tab) => {
+                     return (
+                         <button 
+                            key={tab.id}
+                            onClick={() => setActiveAudit(tab.id)} 
+                            className={`px-4 py-3 text-sm font-semibold border-b-2 transition ${
+                                activeAudit === tab.id 
+                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
+                                : 'border-transparent text-gray-600 hover:border-gray-300'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                     );
+                 })}
             </div>
 
             <div className="p-6 border rounded-lg shadow-md bg-white">
@@ -184,7 +186,9 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                 <div className="mt-8 pt-6 border-t">
                     <h3 className="text-xl font-semibold mb-4 text-gray-800">Audit Result Summary</h3>
                     <div className="space-y-3">
-                        {hasResults ? results.map((item, index) => <AuditResultCard key={index} item={item}/>) : null}
+                        {hasResults ? results.map((item, index) => {
+                            return <AuditResultCard key={index} item={item}/>;
+                        }) : null}
                         {allPassed ? <div className="p-3 rounded-lg bg-green-50 border-green-500 border-l-4">✅ All checks passed.</div> : null}
                     </div>
 

@@ -87,7 +87,7 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
     const currentStepData = getCurrentStep();
     const pathTitles = getPathAsTitles(path);
 
-    // Boolean flags to avoid > comparison inside return
+    // Explicit boolean variables to avoid comparison symbols in JSX
     const isPathEmpty = path.length === 0;
     const canStepBack = path.length >= 2;
 
@@ -130,8 +130,8 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
                 <div id="delivery-flow-container" className="mt-8 pt-6 border-t">
                     <h3 className="text-xl font-semibold mb-4 text-indigo-600">{deliveryFlow[path[0]]?.title}</h3>
                     <div className="flex flex-col space-y-2 mb-4">
-                        <button onClick={resetFlow} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{"\u2190"} กลับไปหน้าหลัก</button>
-                        {canStepBack && <button onClick={stepBack} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{"\u2190"} กลับขั้นตอนก่อนหน้า</button>}
+                        <button onClick={resetFlow} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">&larr; กลับไปหน้าหลัก</button>
+                        {canStepBack && <button onClick={stepBack} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">&larr; กลับขั้นตอนก่อนหน้า</button>}
                     </div>
                     <div className="text-sm text-gray-700 mb-4 font-semibold">
                         เส้นทางดำเนินการ: 
@@ -140,7 +140,7 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
                                 const isFirst = i === 0;
                                 return (
                                     <Fragment key={i}>
-                                        {!isFirst && <span className="mx-1">{"\u2192"}</span>}
+                                        {!isFirst && <span className="mx-1">&rarr;</span>}
                                         {t}
                                     </Fragment>
                                 );

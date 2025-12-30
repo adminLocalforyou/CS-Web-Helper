@@ -29,7 +29,7 @@ const FallbackLogic = () => (
             <p className="font-bold text-green-700 text-xs mb-1">💡 หากไม่สามารถ Cancel Driver ได้ (Driver กำลังมา):</p>
             <ol className="list-decimal list-inside pl-0 text-xs space-y-1">
                 <li>(ตัวเลือก 1) ร้านเจรจา<wbr />กับลูกค้าให้รอรับอาหาร</li>
-                <li>(ตัวเลือก 2) ปล่อยคนขับมาถึงร้าน {" \u2192 "} แจ้งยกเลิก {" \u2192 "} ร้านขอ Refund ค่าส่งจาก CS</li>
+                <li>(ตัวเลือก 2) ปล่อยคนขับมาถึงร้าน &rarr; แจ้งยกเลิก &rarr; ร้านขอ Refund ค่าส่งจาก CS</li>
             </ol>
         </div>
         <div className="mt-4 p-3 bg-gray-50 border-l-4 border-gray-400 rounded-lg text-xs text-gray-700">
@@ -78,7 +78,7 @@ export const deliveryFlow: any = {
                                     <ol className="list-decimal list-inside space-y-2">
                                         <li>ตรวจสอบใน {IHD_ADMIN_LINK} ว่าออเดอร์อยู่ในสถานะ "Searching" หรือไม่</li>
                                         <li>Reassign order หากหาคนขับจาก doordash ไม่ได้</li>
-                                        <li>Reassign ไปที่ uber (เลือกออเดอร์ {" \u003E "} กดจุด 3 จุดมุมขวาบน {" \u003E "} เลือก <strong>reassign order</strong>)</li>
+                                        <li>Reassign ไปที่ uber (เลือกออเดอร์ &gt; กดจุด 3 จุดมุมขวาบน &gt; เลือก <strong>reassign order</strong>)</li>
                                     </ol>
                                 </div>
                             }
@@ -114,7 +114,14 @@ export const deliveryFlow: any = {
                     'redispatch_steps': { 
                         title: '4. ร้านยังรอต่อโดยเรียกคนขับใหม่', isFinal: true, 
                         content: <> 
-                            {['แจ้งร้านให้เรียกคนขับอีกครั้ง', 'ให้ร้านกดเข้าไปที่ออเดอร์นั้นๆ', 'กดจุด 3 จุดมุมบนขวา', 'กด Redispatch Order'].map((step, i) => <div key={i} className="p-4 bg-white rounded-lg border border-indigo-200 shadow-sm mb-3"><span className="text-sm font-bold text-indigo-700">ขั้นตอน {i + 1}:</span><p className="mt-1 text-gray-800">{step}</p></div>)}
+                            {['แจ้งร้านให้เรียกคนขับอีกครั้ง', 'ให้ร้านกดเข้าไปที่ออเดอร์นั้นๆ', 'กดจุด 3 จุดมุมบนขวา', 'กด Redispatch Order'].map((step, i) => {
+                                return (
+                                    <div key={i} className="p-4 bg-white rounded-lg border border-indigo-200 shadow-sm mb-3">
+                                        <span className="text-sm font-bold text-indigo-700">ขั้นตอน {i + 1}:</span>
+                                        <p className="mt-1 text-gray-800">{step}</p>
+                                    </div>
+                                );
+                            })}
                         </> 
                     }
                 }
@@ -185,7 +192,14 @@ export const deliveryFlow: any = {
                 title: '1. ยกเลิกก่อนจะมาที่ร้าน', options: {
                     'redispatch': { 
                         title: '1. เรียกคนขับคนใหม่มารับอีกครั้ง', isFinal: true, 
-                        content: <> {['แจ้งร้านให้เรียกคนขับอีกครั้ง', 'ให้ร้านกดเข้าไปที่ออเดอร์นั้นๆ', 'กดจุด 3 จุดมุมบนขวา', 'กด Redispatch Order'].map((step, i) => <div key={i} className="p-4 bg-white rounded-lg border border-indigo-200 shadow-sm mb-3"><span className="text-sm font-bold text-indigo-700">ขั้นตอน {i + 1}:</span><p className="mt-1 text-gray-800">{step}</p></div>)}</> 
+                        content: <> {['แจ้งร้านให้เรียกคนขับอีกครั้ง', 'ให้ร้านกดเข้าไปที่ออเดอร์นั้นๆ', 'กดจุด 3 จุดมุมบนขวา', 'กด Redispatch Order'].map((step, i) => {
+                            return (
+                                <div key={i} className="p-4 bg-white rounded-lg border border-indigo-200 shadow-sm mb-3">
+                                    <span className="text-sm font-bold text-indigo-700">ขั้นตอน {i + 1}:</span>
+                                    <p className="mt-1 text-gray-800">{step}</p>
+                                </div>
+                            );
+                        })}</> 
                     },
                     'store_delivers': { 
                         title: '2. ร้านสามารถนำออเดอร์ไปส่งเองได้', isFinal: true, 
@@ -246,12 +260,14 @@ export const deliveryFlow: any = {
                             'ขอข้อมูลที่อยู่จัดส่งที่ถูกต้องจากร้านค้าเพื่อสร้างออเดอร์จัดส่งใหม่สำหรับรายการที่ขาด',
                             <Fragment key="step3">Manually Create Delivery order ผ่าน {IHD_ADMIN_LINK} (ของร้านค้านั้นๆ)</Fragment>,
                             'กดเรียก Driver มารับอาหารที่ขาดเหลือที่ร้าน (ตรงนี้ทางร้านต้องจ่ายค่าจัดส่งเอง)'
-                            ].map((step, i) => (
-                                <div key={i} className="p-4 bg-white rounded-lg border border-indigo-200 shadow-sm mb-3">
-                                    <span className="text-sm font-bold text-indigo-700">ขั้นตอน {i + 1}:</span>
-                                    <p className="mt-1 text-gray-800">{step}</p>
-                                </div>
-                            ))
+                            ].map((step, i) => {
+                                return (
+                                    <div key={i} className="p-4 bg-white rounded-lg border border-indigo-200 shadow-sm mb-3">
+                                        <span className="text-sm font-bold text-indigo-700">ขั้นตอน {i + 1}:</span>
+                                        <p className="mt-1 text-gray-800">{step}</p>
+                                    </div>
+                                );
+                            })
                         }</> 
                     }
                 }
