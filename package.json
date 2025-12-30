@@ -1,0 +1,25 @@
+{
+  "name": "customer-support-helper",
+  "version": "1.0.0",
+  "description": "Customer Support Operations Helper",
+  "main": "index.js",
+  "scripts": {
+    "build": "rm -rf public && mkdir public && esbuild index.tsx --bundle --minify --outfile=public/bundle.js --loader:.tsx=tsx --define:process.env.NODE_ENV='\"production\"' --define:process.env.API_KEY=\"'\"$API_KEY\"'\" && cp index.html public/index.html",
+    "dev": "esbuild index.tsx --bundle --outfile=public/bundle.js --loader:.tsx=tsx --servedir=public"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^1.27.0",
+    "chart.js": "^4.5.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.3"
+  }
+}
