@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { TabProps, AuditType, AuditResultItem } from '../types';
 import { performAudit, generateRcaSummary } from '../services/geminiService';
@@ -55,7 +54,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                 setInputs(prev => ({ ...prev, bulkData: event.target?.result as string }));
                 setFileName(file.name);
             };
-            reader.readAsText(file);
+            reader.readAsDataURL(file); // Corrected to use the file object directly
         } else {
             setInputs(prev => ({ ...prev, bulkData: '' }));
             setFileName('No file selected.');
@@ -180,7 +179,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                 <div className="mt-8 pt-6 border-t">
                     <h3 className="text-xl font-semibold mb-4 text-gray-800">Audit Result Summary</h3>
                     <div className="space-y-3">
-                        {results.length > 0 ? results.map((item, index) => <AuditResultCard key={index} item={item}/>) : <div className="p-3 rounded-lg bg-green-50 border-green-500 border-l-4">✅ All checks passed.</div>}
+                        {results.length !== 0 ? results.map((item, index) => <AuditResultCard key={index} item={item}/>) : <div className="p-3 rounded-lg bg-green-50 border-green-500 border-l-4">✅ All checks passed.</div>}
                     </div>
 
                     {activeAudit === AuditType.Cancellation && results.some(r => r.status === 'FAIL' || r.status === 'SUSPICIOUS') && (

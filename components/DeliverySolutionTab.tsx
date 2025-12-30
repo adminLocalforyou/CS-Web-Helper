@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, Fragment } from 'react';
 import { TabProps } from '../types';
 import { generateCommunicationScript } from '../services/geminiService';
@@ -127,11 +126,11 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
                 <div id="delivery-flow-container" className="mt-8 pt-6 border-t">
                     <h3 className="text-xl font-semibold mb-4 text-indigo-600">{deliveryFlow[path[0]]?.title}</h3>
                     <div className="flex flex-col space-y-2 mb-4">
-                        <button onClick={resetFlow} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">&larr; กลับไปหน้าหลัก</button>
-                        {path.length > 1 && <button onClick={stepBack} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">&larr; กลับขั้นตอนก่อนหน้า</button>}
+                        <button onClick={resetFlow} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{"←"} กลับไปหน้าหลัก</button>
+                        {path.length !== 1 && path.length !== 0 && <button onClick={stepBack} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{"←"} กลับขั้นตอนก่อนหน้า</button>}
                     </div>
                     <div className="text-sm text-gray-700 mb-4 font-semibold">เส้นทางดำเนินการ: <span className="text-indigo-700">
-                        {pathTitles.map((t, i) => <Fragment key={i}>{i > 0 && ' → '}{t}</Fragment>)}
+                        {pathTitles.map((t, i) => <Fragment key={i}>{i !== 0 ? ' → ' : ''}{t}</Fragment>)}
                     </span></div>
 
                     <div id="dynamic-steps" className="space-y-4">
