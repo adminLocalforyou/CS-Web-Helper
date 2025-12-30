@@ -88,7 +88,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
 
     const generateRca = useCallback(async () => {
         if (!results) return;
-        const failedItems = results.filter(r => r.status === 'FAIL' || r.status === 'SUSPICIOUS');
+        const failedItems = results.filter(r => (r.status === 'FAIL' || r.status === 'SUSPICIOUS'));
         if (failedItems.length === 0) return;
 
         setIsRcaLoading(true);
@@ -112,11 +112,11 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
         { id: AuditType.GmbBulk, label: '3. GMB Link Audit' },
     ]
 
-    // Use safe checks for JSX
+    // Pre-calculated booleans to avoid comparison operators in JSX
     const hasResults = (results !== null && results.length !== 0);
     const allPassed = (results !== null && results.length === 0);
     const isCancellationAudit = (activeAudit === AuditType.Cancellation);
-    const hasAuditFailures = (results !== null && results.some(r => r.status === 'FAIL' || r.status === 'SUSPICIOUS'));
+    const hasAuditFailures = (results !== null && results.some(r => (r.status === 'FAIL' || r.status === 'SUSPICIOUS')));
 
     return (
         <section id="audit">
