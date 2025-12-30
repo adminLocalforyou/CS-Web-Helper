@@ -88,8 +88,8 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
     const pathTitles = getPathAsTitles(path);
 
     // Explicit boolean variables to avoid comparison symbols in JSX
-    const isPathEmpty = path.length === 0;
-    const canStepBack = path.length >= 2;
+    const isPathEmpty = (path.length === 0);
+    const canStepBack = (path.length >= 2);
 
     return (
         <section id="delivery">
@@ -130,17 +130,17 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
                 <div id="delivery-flow-container" className="mt-8 pt-6 border-t">
                     <h3 className="text-xl font-semibold mb-4 text-indigo-600">{deliveryFlow[path[0]]?.title}</h3>
                     <div className="flex flex-col space-y-2 mb-4">
-                        <button onClick={resetFlow} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">&larr; กลับไปหน้าหลัก</button>
-                        {canStepBack && <button onClick={stepBack} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">&larr; กลับขั้นตอนก่อนหน้า</button>}
+                        <button onClick={resetFlow} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{"\u2190"} กลับไปหน้าหลัก</button>
+                        {canStepBack && <button onClick={stepBack} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{"\u2190"} กลับขั้นตอนก่อนหน้า</button>}
                     </div>
                     <div className="text-sm text-gray-700 mb-4 font-semibold">
                         เส้นทางดำเนินการ: 
                         <span className="text-indigo-700 ml-1">
                             {pathTitles.map((t, i) => {
-                                const isFirst = i === 0;
+                                const isFirst = (i === 0);
                                 return (
                                     <Fragment key={i}>
-                                        {!isFirst && <span className="mx-1">&rarr;</span>}
+                                        {!isFirst && <span className="mx-1">{"\u2192"}</span>}
                                         {t}
                                     </Fragment>
                                 );
@@ -155,11 +155,13 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
                             <>
                                 <h4 className="text-lg font-semibold text-gray-800 mb-3">เลือกการดำเนินการต่อไป:</h4>
                                 <div className="space-y-3">
-                                    {Object.entries(currentStepData.options).map(([key, value]: [string, any]) => (
-                                        <button key={key} onClick={() => handleOptionSelect(key)} className="bg-indigo-100 text-indigo-700 py-3 px-4 rounded-lg font-medium border border-indigo-300 w-full text-left hover:bg-indigo-200">
-                                            {value.title}
-                                        </button>
-                                    ))}
+                                    {Object.entries(currentStepData.options).map(([key, value]: [string, any]) => {
+                                        return (
+                                            <button key={key} onClick={() => handleOptionSelect(key)} className="bg-indigo-100 text-indigo-700 py-3 px-4 rounded-lg font-medium border border-indigo-300 w-full text-left hover:bg-indigo-200">
+                                                {value.title}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </>
                         )}

@@ -112,10 +112,11 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
         { id: AuditType.GmbBulk, label: '3. GMB Link Audit' },
     ]
 
-    const hasResults = results !== null && results.length !== 0;
-    const allPassed = results !== null && results.length === 0;
-    const isCancellationAudit = activeAudit === AuditType.Cancellation;
-    const hasAuditFailures = results !== null && results.some(r => r.status === 'FAIL' || r.status === 'SUSPICIOUS');
+    // Use safe checks for JSX
+    const hasResults = (results !== null && results.length !== 0);
+    const allPassed = (results !== null && results.length === 0);
+    const isCancellationAudit = (activeAudit === AuditType.Cancellation);
+    const hasAuditFailures = (results !== null && results.some(r => r.status === 'FAIL' || r.status === 'SUSPICIOUS'));
 
     return (
         <section id="audit">
