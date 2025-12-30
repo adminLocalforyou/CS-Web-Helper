@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, Fragment } from 'react';
 import { TabProps } from '../types';
 import { generateCommunicationScript } from '../services/geminiService';
@@ -88,12 +87,16 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
     const currentStepData = getCurrentStep();
     const pathTitles = getPathAsTitles(path);
 
+    // Boolean flags to avoid > comparison inside return
+    const isPathEmpty = path.length === 0;
+    const canStepBack = path.length >= 2;
+
     return (
         <section id="delivery">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">IHD Solution: เครื่องมือแก้ปัญหา</h2>
             <p className="text-gray-600 mb-4">เครื่องมือแก้ปัญหาด่วนเพื่อลดเวลาตัดสินใจและข้อผิดพลาดของทีม CS</p>
 
-            {path.length === 0 ? (
+            {isPathEmpty ? (
                 <div id="delivery-step-1">
                     <div className="bg-orange-50 border-l-4 border-orange-500 p-4 mb-6 rounded-r-lg shadow-sm">
                         <p className="text-sm font-bold text-orange-700 mb-1">หมายเหตุ: ก่อนเริ่มดำเนินการด้านล่างทุกครั้ง</p>
@@ -127,18 +130,21 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
                 <div id="delivery-flow-container" className="mt-8 pt-6 border-t">
                     <h3 className="text-xl font-semibold mb-4 text-indigo-600">{deliveryFlow[path[0]]?.title}</h3>
                     <div className="flex flex-col space-y-2 mb-4">
-                        <button onClick={resetFlow} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{'\u2190'} กลับไปหน้าหลัก</button>
-                        {path.length > 1 && <button onClick={stepBack} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{'\u2190'} กลับขั้นตอนก่อนหน้า</button>}
+                        <button onClick={resetFlow} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{"\u2190"} กลับไปหน้าหลัก</button>
+                        {canStepBack && <button onClick={stepBack} className="text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1">{"\u2190"} กลับขั้นตอนก่อนหน้า</button>}
                     </div>
                     <div className="text-sm text-gray-700 mb-4 font-semibold">
                         เส้นทางดำเนินการ: 
                         <span className="text-indigo-700 ml-1">
-                            {pathTitles.map((t, i) => (
-                                <Fragment key={i}>
-                                    {i !== 0 && <span className="mx-1">{'\u2192'}</span>}
-                                    {t}
-                                </Fragment>
-                            ))}
+                            {pathTitles.map((t, i) => {
+                                const isFirst = i === 0;
+                                return (
+                                    <Fragment key={i}>
+                                        {!isFirst && <span className="mx-1">{"\u2192"}</span>}
+                                        {t}
+                                    </Fragment>
+                                );
+                            })}
                         </span>
                     </div>
 

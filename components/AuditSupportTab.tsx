@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { TabProps, AuditType, AuditResultItem } from '../types';
 import { performAudit, generateRcaSummary } from '../services/geminiService';
@@ -113,8 +112,10 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
         { id: AuditType.GmbBulk, label: '3. GMB Link Audit' },
     ]
 
-    const hasResults = results !== null && results.length > 0;
+    const hasResults = results !== null && results.length !== 0;
     const allPassed = results !== null && results.length === 0;
+    const isCancellationAudit = activeAudit === AuditType.Cancellation;
+    const hasAuditFailures = results !== null && results.some(r => r.status === 'FAIL' || r.status === 'SUSPICIOUS');
 
     return (
         <section id="audit">
@@ -149,7 +150,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                         </div>
                     </>
                 )}
-                {activeAudit === AuditType.Cancellation && (
+                {isCancellationAudit && (
                      <>
                         <h3 className="text-xl font-semibold mb-4 text-indigo-600">2. Cancellation Audit Checklist</h3>
                         <div className="space-y-3">
@@ -187,7 +188,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                         {allPassed ? <div className="p-3 rounded-lg bg-green-50 border-green-500 border-l-4">✅ All checks passed.</div> : null}
                     </div>
 
-                    {activeAudit === AuditType.Cancellation && results.some(r => r.status === 'FAIL' || r.status === 'SUSPICIOUS') && (
+                    {(isCancellationAudit && hasAuditFailures) && (
                         <div className="mt-4">
                             <button onClick={generateRca} disabled={isRcaLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:bg-purple-400 flex justify-center items-center">
                                 {isRcaLoading && <LoadingSpinner/>}
