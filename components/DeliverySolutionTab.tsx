@@ -4,7 +4,7 @@ import { generateCommunicationScript } from '../services/geminiService';
 import { deliveryFlow, IHD_ADMIN_LINK } from '../constants';
 import LoadingSpinner from './LoadingSpinner';
 
-const DeliverySolutionTab: React.FC<TabProps> = function({ addLog }) {
+function DeliverySolutionTab({ addLog }: TabProps) {
     const [path, setPath] = useState<string[]>([]);
     const [aiScript, setAiScript] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -49,7 +49,6 @@ const DeliverySolutionTab: React.FC<TabProps> = function({ addLog }) {
         setIsGenerating(true);
         setAiScript(null);
         const pathTitles = getPathAsTitles(path);
-        // Clean text for logging using Unicode arrow
         const logPath = pathTitles.map(function(t) { return typeof t === 'string' ? t : 'Action'; }).join(' \u2192 ');
         try {
             const script = await generateCommunicationScript(logPath);
@@ -128,7 +127,7 @@ const DeliverySolutionTab: React.FC<TabProps> = function({ addLog }) {
                 </div>
             ) : (
                 <div id={"delivery-flow-container"} className={"mt-8 pt-6 border-t"}>
-                    <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{deliveryFlow[path[0]]?.title}</h3>
+                    <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{deliveryFlow[path[0]] ? deliveryFlow[path[0]].title : ''}</h3>
                     <div className={"flex flex-col space-y-2 mb-4"}>
                         <button onClick={resetFlow} className={"text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1"}>{"\u2190 กลับไปหน้าหลัก"}</button>
                         {canStepBack && <button onClick={stepBack} className={"text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1"}>{"\u2190 กลับขั้นตอนก่อนหน้า"}</button>}
@@ -149,9 +148,9 @@ const DeliverySolutionTab: React.FC<TabProps> = function({ addLog }) {
                     </div>
 
                     <div id={"dynamic-steps"} className={"space-y-4"}>
-                        {currentStepData?.content && <div className={"mb-4"}>{currentStepData.content}</div>}
+                        {currentStepData && currentStepData.content && <div className={"mb-4"}>{currentStepData.content}</div>}
                         
-                        {currentStepData?.options && (
+                        {currentStepData && currentStepData.options && (
                             <React.Fragment>
                                 <h4 className={"text-lg font-semibold text-gray-800 mb-3"}>{"เลือกการดำเนินการต่อไป:"}</h4>
                                 <div className={"space-y-3"}>
@@ -167,7 +166,7 @@ const DeliverySolutionTab: React.FC<TabProps> = function({ addLog }) {
                         )}
                     </div>
                     
-                    {currentStepData?.isFinal && (
+                    {currentStepData && currentStepData.isFinal && (
                         <button onClick={handleGenerateScript} disabled={isGenerating} className={"mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md w-full disabled:bg-purple-400 flex justify-center items-center"}>
                             {isGenerating && <LoadingSpinner />}
                             {isGenerating ? "Generating..." : "✨ สร้างข้อความสื่อสารอัตโนมัติ"}
@@ -187,6 +186,6 @@ const DeliverySolutionTab: React.FC<TabProps> = function({ addLog }) {
             )}
         </section>
     );
-};
+}
 
 export default DeliverySolutionTab;
