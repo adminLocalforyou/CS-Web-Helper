@@ -22,8 +22,8 @@ const AuditResultCard: React.FC<{ item: AuditResultItem }> = ({ item }) => {
     return (
         <div className={`p-3 rounded-lg shadow-sm border-l-4 ${currentStyle}`}>
             <span className={`float-right text-xs font-bold px-2 py-1 rounded-full ${currentTextStyle}`}>{item.status}</span>
-            <p className="font-bold text-gray-800">{item.title}</p>
-            <p className="text-xs text-gray-700 mt-1">{item.detail}</p>
+            <p className={"font-bold text-gray-800"}>{item.title}</p>
+            <p className={"text-xs text-gray-700 mt-1"}>{item.detail}</p>
         </div>
     );
 };
@@ -195,7 +195,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                         {results.length > 0 ? results.map((item, index) => {
                             return <AuditResultCard key={index} item={item}/>;
                         }) : (
-                            <div className={"p-3 rounded-lg bg-green-50 border-green-500 border-l-4"}>{"✅ All checks passed."}</div>
+                            <div className={"p-3 rounded-lg bg-green-50 border-green-500 border-l-4"}>{"\u2705 All checks passed."}</div>
                         )}
                     </div>
 
@@ -207,7 +207,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                             </button>
                             {rca && (
                                 <div className={"mt-4 p-4 bg-yellow-50 rounded-lg"}>
-                                    <p className={"font-bold text-red-700"}>{"📌 Root Cause Analysis (RCA) Summary"}</p>
+                                    <p className={"font-bold text-red-700"}>{"\uD83D\uDCCC Root Cause Analysis (RCA) Summary"}</p>
                                     <p className={"text-sm mt-1 text-gray-800 whitespace-pre-wrap"}>{rca}</p>
                                 </div>
                             )}

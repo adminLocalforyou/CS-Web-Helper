@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Use Unicode escapes for all special characters to prevent JSX parsing errors
 export const IHD_ADMIN_LINK = (
   <a href={"https://app.inhousedelivery.com/#/live-view"} target={"_blank"} rel={"noopener noreferrer"} className={"text-indigo-600 underline font-semibold"}>
     {"\uD83D\uDC49 IHD Admin Panel"}
