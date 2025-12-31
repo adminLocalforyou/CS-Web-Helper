@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { Tab, LogEntry, TabProps } from './types';
 import Header from './components/Header';
@@ -10,40 +11,24 @@ import EmailAssistantTab from './components/EmailAssistantTab';
 import LogsTab from './components/LogsTab';
 
 function App() {
-    const [activeTab, setActiveTab] = useState<Tab>(Tab.Delivery);
-    const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [activeTab, setActiveTab] = useState(Tab.Delivery);
+    const [logs, setLogs] = useState([]);
 
     const addLog = useCallback(function(tool: string, input: any, output: string) {
-        setLogs(function(prevLogs) {
-            return [
-                { timestamp: new Date(), tool, input, output, userId: 'currentUser' },
-                ...prevLogs
-            ];
+        setLogs(function(prev: any) {
+            const newEntry = { timestamp: new Date(), tool, input, output, userId: 'currentUser' };
+            return [newEntry, ...prev];
         });
     }, []);
 
     const renderTabContent = function() {
-        if (activeTab === Tab.Analysis) {
-            return <AnalysisTab addLog={addLog} />;
-        }
-        if (activeTab === Tab.Delivery) {
-            return <DeliverySolutionTab addLog={addLog} />;
-        }
-        if (activeTab === Tab.Audit) {
-            return <AuditSupportTab addLog={addLog} />;
-        }
-        if (activeTab === Tab.Menu) {
-            return <MenuCheckTab addLog={addLog} />;
-        }
-        if (activeTab === Tab.Extraction) {
-            return <ExtractionTab addLog={addLog} />;
-        }
-        if (activeTab === Tab.EmailAssistant) {
-            return <EmailAssistantTab addLog={addLog} />;
-        }
-        if (activeTab === Tab.Log) {
-            return <LogsTab logs={logs} />;
-        }
+        if (activeTab === Tab.Analysis) { return <AnalysisTab addLog={addLog} />; }
+        if (activeTab === Tab.Delivery) { return <DeliverySolutionTab addLog={addLog} />; }
+        if (activeTab === Tab.Audit) { return <AuditSupportTab addLog={addLog} />; }
+        if (activeTab === Tab.Menu) { return <MenuCheckTab addLog={addLog} />; }
+        if (activeTab === Tab.Extraction) { return <ExtractionTab addLog={addLog} />; }
+        if (activeTab === Tab.EmailAssistant) { return <EmailAssistantTab addLog={addLog} />; }
+        if (activeTab === Tab.Log) { return <LogsTab logs={logs} />; }
         return null;
     };
 
@@ -51,10 +36,10 @@ function App() {
         { id: Tab.Delivery, label: 'IHD Solution' },
         { id: Tab.Menu, label: 'Menu Cross-Check' },
         { id: Tab.Extraction, label: 'AI Scan Text' },
-        { id: Tab.Analysis, label: 'Store Development Analysis' },
-        { id: Tab.Audit, label: 'Audit Support' },
-        { id: Tab.EmailAssistant, label: 'AI Email Assistant' },
-        { id: Tab.Log, label: 'Summary & Logs' },
+        { id: Tab.Analysis, label: 'Analysis' },
+        { id: Tab.Audit, label: 'Audit' },
+        { id: Tab.EmailAssistant, label: 'Emails' },
+        { id: Tab.Log, label: 'Logs' },
     ];
 
     return (

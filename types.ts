@@ -51,5 +51,5 @@ export interface LogEntry {
 }
 
 export interface TabProps {
-    addLog: (tool: string, input: any, output: string) => void;
+    addLog(tool: string, input: any, output: string): void;
 }
