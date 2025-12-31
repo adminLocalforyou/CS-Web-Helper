@@ -203,7 +203,6 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                         <div className={"mt-4"}>
                             <button onClick={generateRca} disabled={isRcaLoading} className={"w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:bg-purple-400 flex justify-center items-center"}>
                                 {isRcaLoading && <LoadingSpinner />}
-                                {/* Fixed: Using isRcaLoading instead of undefined isGenerating */}
                                 {isRcaLoading ? "Generating..." : "\u2728 Generate Root Cause Analysis (RCA) Summary"}
                             </button>
                             {rca && (

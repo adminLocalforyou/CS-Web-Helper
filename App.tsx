@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Tab, LogEntry } from './types';
 import Header from './components/Header';
@@ -59,19 +58,21 @@ const App: React.FC = () => {
             <Header />
             <main className="max-w-7xl mx-auto bg-white rounded-xl shadow-2xl p-4 sm:p-8">
                 <div className="flex flex-wrap border-b border-gray-200 mb-6">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`px-4 py-3 text-sm font-semibold border-b-2 transition duration-150 ${
-                                activeTab === tab.id 
-                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
-                                : 'border-transparent text-gray-600 hover:text-indigo-600 hover:border-gray-300'
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+                    {tabs.map(function(tab) {
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`px-4 py-3 text-sm font-semibold border-b-2 transition duration-150 ${
+                                    activeTab === tab.id 
+                                    ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
+                                    : 'border-transparent text-gray-600 hover:text-indigo-600 hover:border-gray-300'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        );
+                    })}
                 </div>
                 <div id="tab-content">
                     {renderTabContent()}
