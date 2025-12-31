@@ -1,11 +1,19 @@
+
 import React, { useState, useCallback } from 'react';
 import { TabProps, MenuCheckResultItem } from '../types';
 import { crossCheckMenu } from '../services/geminiService';
 import LoadingSpinner from './LoadingSpinner';
 
-const ResultItemCard: React.FC<{ item: MenuCheckResultItem }> = function({ item }) {
+// Added key to props to resolve Type '{ key: any; item: any; }' is not assignable to type 'ResultItemCardProps'
+interface ResultItemCardProps {
+    item: MenuCheckResultItem;
+    key?: any;
+}
+
+function ResultItemCard({ item }: ResultItemCardProps) {
+    // Added 'text' property to PASS to ensure type consistency across all statuses
     const statusStyles = {
-        PASS: { card: 'border-green-500 bg-green-50', badge: 'bg-green-500' },
+        PASS: { card: 'border-green-500 bg-green-50', badge: 'bg-green-500', text: '' },
         FAIL: { card: 'border-red-500 bg-red-50', badge: 'bg-red-500', text: 'text-red-700' },
         WARN: { card: 'border-amber-500 bg-amber-50', badge: 'bg-amber-500', text: 'text-amber-700' }
     };
@@ -51,9 +59,9 @@ const ResultItemCard: React.FC<{ item: MenuCheckResultItem }> = function({ item 
             )}
         </div>
     );
-};
+}
 
-const MenuCheckTab: React.FC<TabProps> = function({ addLog }) {
+function MenuCheckTab({ addLog }: TabProps) {
     const [webMenuUrl, setWebMenuUrl] = useState('');
     const [file, setFile] = useState<File | null>(null);
     const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -130,8 +138,10 @@ const MenuCheckTab: React.FC<TabProps> = function({ addLog }) {
 
             {isLoading && (
                 <div className="mt-8 border-t pt-6 text-center">
-                    <svg className="animate-spin mx-auto h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <p className="mt-2 text-gray-600">{"AI is analyzing the menu and website..."}</p>
+                    <div className="flex justify-center items-center">
+                      <LoadingSpinner />
+                      <p className="ml-2 text-gray-600">{"AI is analyzing the menu and website..."}</p>
+                    </div>
                 </div>
             )}
 
@@ -147,6 +157,6 @@ const MenuCheckTab: React.FC<TabProps> = function({ addLog }) {
             )}
         </section>
     );
-};
+}
 
 export default MenuCheckTab;

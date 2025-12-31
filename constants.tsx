@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // Use Unicode escapes for all special characters to prevent JSX parsing errors
@@ -7,15 +8,27 @@ export const IHD_ADMIN_LINK = (
   </a>
 );
 
-const AppName: React.FC<{ name: string; underline?: boolean }> = function({ name, underline = true }) {
+interface AppNameProps {
+  name: string;
+  underline?: boolean;
+}
+
+function AppName({ name, underline = true }: AppNameProps) {
   const className = underline ? "underline" : "no-underline";
   const isLfy = name.indexOf("Local for you") !== -1;
   const isIhd = name.indexOf("IHD") !== -1;
   const label = isLfy ? "Local for you App" : (isIhd ? "IHD App" : name);
   return <span className={className}>{label}</span>;
-};
+}
 
-const TwoAppBoxes: React.FC<{ box1Title: React.ReactNode; box1Content: React.ReactNode; box2Title: React.ReactNode; box2Content: React.ReactNode }> = function({ box1Title, box1Content, box2Title, box2Content }) {
+interface TwoAppBoxesProps {
+  box1Title: React.ReactNode;
+  box1Content: React.ReactNode;
+  box2Title: React.ReactNode;
+  box2Content: React.ReactNode;
+}
+
+function TwoAppBoxes({ box1Title, box1Content, box2Title, box2Content }: TwoAppBoxesProps) {
   return (
     <div className={"grid grid-cols-1 md:grid-cols-2 gap-4"}>
       <div className={"p-4 bg-indigo-50 rounded-lg border border-indigo-200"}>
@@ -28,9 +41,9 @@ const TwoAppBoxes: React.FC<{ box1Title: React.ReactNode; box1Content: React.Rea
       </div>
     </div>
   );
-};
+}
 
-const FallbackLogic: React.FC = function() {
+function FallbackLogic() {
   return (
     <React.Fragment>
       <p className={"mt-3 font-bold text-red-600 text-xs"}>{"Note: จะยกเลิกได้ต่อเมื่อสถานะคนขับเป็น a waiting driver หรือ picking up ในระยะแรกๆ"}</p>
@@ -47,16 +60,23 @@ const FallbackLogic: React.FC = function() {
       </div>
     </React.Fragment>
   );
-};
+}
 
-const StepBox: React.FC<{ index: number; step: string }> = function({ index, step }) {
+// Added key to props to resolve Type '{ key: number; index: number; step: string; }' is not assignable to type 'StepBoxProps'
+interface StepBoxProps {
+  index: number;
+  step: string;
+  key?: any;
+}
+
+function StepBox({ index, step }: StepBoxProps) {
   return (
     <div className={"p-4 bg-white rounded-lg border border-indigo-200 shadow-sm mb-3"}>
       <span className={"text-sm font-bold text-indigo-700"}>{"ขั้นตอน "}{(index + 1)}{":"}</span>
       <p className={"mt-1 text-gray-800"}>{step}</p>
     </div>
   );
-};
+}
 
 export const deliveryFlow: any = {
   'late': {
@@ -183,10 +203,6 @@ export const deliveryFlow: any = {
                   box2Title={<AppName name={"Local for you App"} />} 
                   box2Content={<React.Fragment><ol className={"list-decimal list-inside"}><li>{"ไปที่ Application restaurant order-taking app (Local for you)"}</li><li>{"เลือกออเดอร์นั้นๆที่ต้องการ Refund"}</li><li>{"กดจุดสามจุดมุมขวาล่าง"}</li><li>{"กด Cancel order"}</li></ol><p className={"mt-2 text-sm text-green-700 font-semibold"}>{"(วิธีนี้ลูกค้าของทางร้านจะได้รับเงิน Refund)"}</p></React.Fragment>} 
                 />
-                <div className={"mt-4 p-3 bg-gray-50 border-l-4 border-gray-400 rounded-lg text-xs text-gray-700"}>
-                  <p className={"font-bold mb-1 text-gray-800"}>{"รายละเอียดเพิ่มเติมสำหรับตัวเลือกที่ 2 (กรณีไม่สามารถยกเลิก Driver ได้):"}</p>
-                  <p>{"ทางร้านควรปล่อยให้ Driver มาที่ร้านตามปกติ จากนั้นแจ้ง Driver ว่าออเดอร์ถูกยกเลิกไปแล้ว และทำเรื่องขอ Refund ค่าคนขับมาทาง CS ด้วยเหตุผล: \"รอคนขับมารับอาหารที่ร้านนาน ลูกค้ายกเลิกออเดอร์แล้ว ขอ Refund ค่าส่งที่เรียกคนขับมาและคนขับมาข้า\""}</p>
-                </div>
               </React.Fragment>
             )
           }
@@ -455,9 +471,6 @@ export const deliveryFlow: any = {
           <li>{"กด "}<strong>{"\"Next\""}</strong>{" เพื่อเลือก Driver (เจ้าที่ร้านใช้ส่งประจำ)"}</li>
           <li>{"กด "}<strong>{"\"Create Order\""}</strong>{" เพื่อยืนยัน"}</li>
         </ol>
-        <div className={"mt-4 p-3 bg-pink-50 rounded-lg border border-pink-100 text-xs text-pink-800"}>
-          <p><strong>{"หมายเหตุ:"}</strong> {"วิธีนี้ใช้สำหรับกรณีฉุกเฉินหรือการส่งรายการอาหารที่ตกหล่นซึ่งร้านค้ายอมรับค่าจัดส่งเพิ่มเติม"}</p>
-        </div>
       </div>
     )
   }

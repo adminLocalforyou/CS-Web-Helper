@@ -1,9 +1,16 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { TabProps, AuditType, AuditResultItem } from '../types';
 import { performAudit, generateRcaSummary } from '../services/geminiService';
 import LoadingSpinner from './LoadingSpinner';
 
-const AuditResultCard: React.FC<{ item: AuditResultItem }> = function({ item }) {
+// Added key to props to resolve Type '{ key: any; item: any; }' is not assignable to type 'AuditResultCardProps'
+interface AuditResultCardProps {
+    item: AuditResultItem;
+    key?: any;
+}
+
+function AuditResultCard({ item }: AuditResultCardProps) {
     const statusStyles = {
         PASS: 'border-green-500 bg-green-50',
         FAIL: 'border-red-500 bg-red-50',
@@ -26,9 +33,9 @@ const AuditResultCard: React.FC<{ item: AuditResultItem }> = function({ item }) 
             <p className={"text-xs text-gray-700 mt-1"}>{item.detail}</p>
         </div>
     );
-};
+}
 
-const AuditSupportTab: React.FC<TabProps> = function({ addLog }) {
+function AuditSupportTab({ addLog }: TabProps) {
     const [activeAudit, setActiveAudit] = useState<AuditType>(AuditType.PostLive);
     const [inputs, setInputs] = useState({ website: '', gmb: '', facebook: '', otherData: '', bulkData: '' });
     const [fileName, setFileName] = useState('No file selected.');
@@ -214,6 +221,6 @@ const AuditSupportTab: React.FC<TabProps> = function({ addLog }) {
             )}
         </section>
     );
-};
+}
 
 export default AuditSupportTab;

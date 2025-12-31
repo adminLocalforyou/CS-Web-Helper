@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult } from '../types';
 
@@ -26,7 +25,7 @@ const extractJsonFromString = (text: string): string => {
     return clean.trim();
 };
 
-export const analyzeStorePresence = async (websiteUrl: string, gmbUrl: string, facebookUrl: string): Promise<AnalysisResult> => {
+export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, facebookUrl: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
@@ -57,10 +56,10 @@ Based on this information (or typical issues if you cannot access the URLs), pro
         }
     });
 
-    return JSON.parse(extractJsonFromString(response.text));
-};
+    return JSON.parse(extractJsonFromString(response.text)) as AnalysisResult;
+}
 
-export const performAudit = async (auditType: AuditType, auditData: any): Promise<AuditResultItem[]> => {
+export async function performAudit(auditType: AuditType, auditData: any) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     let prompt = `You are an operations auditor. Perform an audit.`;
@@ -95,10 +94,10 @@ export const performAudit = async (auditType: AuditType, auditData: any): Promis
         }
     });
 
-    return JSON.parse(extractJsonFromString(response.text));
-};
+    return JSON.parse(extractJsonFromString(response.text)) as AuditResultItem[];
+}
 
-export const generateRcaSummary = async (failures: AuditResultItem[]): Promise<string> => {
+export async function generateRcaSummary(failures: AuditResultItem[]) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
@@ -106,9 +105,9 @@ export const generateRcaSummary = async (failures: AuditResultItem[]): Promise<s
         contents: `Based on these audit failures: ${JSON.stringify(failures)}, write a concise root cause analysis (RCA) summary in Thai to explain the core problem and suggest a solution.`,
     });
     return response.text;
-};
+}
 
-export const extractMenuData = async (imageBase64: string, mimeType: string, shopType: 'restaurant' | 'massage' = 'restaurant'): Promise<string> => {
+export async function extractMenuData(imageBase64: string, mimeType: string, shopType: 'restaurant' | 'massage' = 'restaurant') {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     
@@ -158,9 +157,9 @@ export const extractMenuData = async (imageBase64: string, mimeType: string, sho
         contents: { parts: [imagePart, textPart] },
     });
     return response.text;
-};
+}
 
-export const crossCheckMenu = async (webMenuUrl: string, imageBase64: string, mimeType: string): Promise<MenuCheckResultItem[]> => {
+export async function crossCheckMenu(webMenuUrl: string, imageBase64: string, mimeType: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const imagePart = {
@@ -216,10 +215,10 @@ Analyze carefully.`,
     });
 
     const jsonText = extractJsonFromString(response.text);
-    return JSON.parse(jsonText);
-};
+    return JSON.parse(jsonText) as MenuCheckResultItem[];
+}
 
-export const generateCommunicationScript = async (path: string): Promise<string> => {
+export async function generateCommunicationScript(path: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
@@ -227,9 +226,9 @@ export const generateCommunicationScript = async (path: string): Promise<string>
         contents: `Generate a polite and professional communication script in Thai for a customer support agent to send to a restaurant owner. The problem is: "${path}". The script should clearly state the recommended next step for the restaurant.`,
     });
     return response.text;
-};
+}
 
-export const generateEmailDraft = async (scenario: string, context: string, tone: string): Promise<string> => {
+export async function generateEmailDraft(scenario: string, context: string, tone: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const prompt = `You are an expert customer support agent for 'Local for you', a food delivery platform service. 
@@ -247,4 +246,4 @@ Please structure the email with a clear subject line, greeting, body, resolution
         contents: prompt,
     });
     return response.text;
-};
+}
