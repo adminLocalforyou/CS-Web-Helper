@@ -1,6 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult } from '../types';
 
+function getAIInstance() {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+        throw new Error("API key is missing. Please ensure the API_KEY environment variable is set.");
+    }
+    return new GoogleGenAI({ apiKey });
+}
+
 function extractJsonFromString(text: string) {
     try {
         const match = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
@@ -21,7 +29,7 @@ function extractJsonFromString(text: string) {
 }
 
 export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, facebookUrl: string) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
@@ -47,7 +55,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
 }
 
 export async function performAudit(auditType: AuditType, auditData: any) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
     let prompt = `Operations audit for ${auditType}. Data: ${JSON.stringify(auditData)}. Return an array of audit items with status (PASS/FAIL/SUSPICIOUS), title, and detail.`;
 
@@ -75,7 +83,7 @@ export async function performAudit(auditType: AuditType, auditData: any) {
 }
 
 export async function generateRcaSummary(failures: AuditResultItem[]) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
@@ -85,26 +93,43 @@ export async function generateRcaSummary(failures: AuditResultItem[]) {
 }
 
 export async function extractMenuData(imageBase64: string, mimeType: string, shopType: 'restaurant' | 'massage' = 'restaurant') {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
     
     let instructions = '';
     if (shopType === 'restaurant') {
-        instructions = `You are a menu extraction expert. Identify all food items, prices, and descriptions. Output them clearly in this format for each item:
+        instructions = `You are an expert menu extraction AI. 
+CRITICAL RULES:
+1. OUTPUT MUST BE IN ENGLISH ONLY. Do not translate any text to Thai.
+2. Extract all food items, prices, and descriptions exactly as seen.
+Format:
 [Item Name]
 Price : [Price]
 Description
 [Description text]
 ---`;
     } else {
-        instructions = `You are a massage service extraction expert. Identify all services, categories, durations, and prices. Output them clearly in this format:
-Category : [Category]
-[Service Name] [Duration] [Price]
+        instructions = `You are an expert service extraction AI for Massage and Wellness shops. 
+CRITICAL RULES:
+1. ALL OUTPUT MUST BE IN ENGLISH ONLY. Do not translate any text to Thai.
+2. GROUP SERVICES BY CATEGORY. 
+3. FORMAT: Whenever a new category starts, print "Category : [Category Name]". 
+4. List services under that category using format: "- [Service Name] [Duration] [Price]".
+5. If the category changes (e.g. from Remedial to Deep Tissue), print the new "Category : [Name]" header again.
+
+Example Output Format:
+Category : THERAPEUTIC (Remedial)
+- Remedial Massage 60 mins $90
+- Remedial Massage 90 mins $130
+---
+Category : THERAPEUTIC (Deep Tissue)
+- Deep Tissue Massage 60 mins $85
 ---`;
     }
 
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: instructions + "\n\nExtract all data from the provided image." };
+    const textPart = { text: `${instructions}\n\nPlease extract all data from the attached image strictly following the rules above.` };
+    
     const response = await ai.models.generateContent({
         model,
         contents: { parts: [imagePart, textPart] },
@@ -113,7 +138,7 @@ Category : [Category]
 }
 
 export async function crossCheckMenu(webMenuUrl: string, imageBase64: string, mimeType: string) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
     const textPart = { text: `Compare menu image with ${webMenuUrl}. Return JSON array of objects with itemName, status (PASS/FAIL/WARN), mismatchDetails, webData (price, description), imageData (price, description).` };
@@ -144,7 +169,7 @@ export async function crossCheckMenu(webMenuUrl: string, imageBase64: string, mi
 }
 
 export async function generateCommunicationScript(path: string) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
@@ -154,7 +179,7 @@ export async function generateCommunicationScript(path: string) {
 }
 
 export async function generateEmailDraft(scenario: string, context: string, tone: string) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,

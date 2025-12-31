@@ -19,7 +19,7 @@ function ExtractionTab({ addLog }: TabProps) {
             reader.onloadend = function() {
                 const res = String(reader.result);
                 const parts = res.split(',');
-                if (parts.length !== 1) {
+                if (parts.length > 1) {
                     setImageBase64(parts[1] as any);
                 }
             };
@@ -29,7 +29,7 @@ function ExtractionTab({ addLog }: TabProps) {
 
     const runExtraction = useCallback(async function() {
         if (!imageBase64 || !file) { 
-            setError('Please select an image first.' as any);
+            setError('โปรดเลือกรูปภาพก่อนดำเนินการ' as any);
             return; 
         }
         setIsLoading(true);
@@ -41,77 +41,82 @@ function ExtractionTab({ addLog }: TabProps) {
             setResult(extractedData as any);
             addLog('AI Scan Text', { fileName: castFile.name, shopType }, 'Success');
         } catch (err: any) {
-            setError((err.message || 'Error scanning image') as any);
+            setError((err.message || 'เกิดข้อผิดพลาดในการแสกนรูปภาพ') as any);
         } finally {
             setIsLoading(false);
         }
     }, [imageBase64, file, shopType, addLog]);
 
-    const setRestaurant = function() { setShopType('restaurant'); };
-    const setMassage = function() { setShopType('massage'); };
-
     return (
         <section id={"extraction"}>
             <h2 className={"text-2xl font-bold text-gray-800 mb-4"}>{"AI Scan Text"}</h2>
-            <p className={"text-gray-600 mb-6"}>{"AI tool to scan and extract structured data (Menu Items or Services) from a local image file."}</p>
+            <p className={"text-gray-600 mb-6"}>{"เครื่องมือช่วยดึงข้อมูลจากรูปภาพ (เมนูอาหาร หรือ รายการบริการ) ออกมาเป็นข้อความที่จัดระเบียบแล้ว"}</p>
 
             <div className={"mb-6"}>
-                <label className={"block text-sm font-medium text-gray-700 mb-2"}>{"Select Shop Type"}</label>
-                <div className={"flex space-x-2"}>
+                <label className={"block text-sm font-medium text-gray-700 mb-3"}>{"เลือกประเภทของร้าน"}</label>
+                <div className={"flex space-x-3"}>
                     <button 
-                        onClick={setRestaurant}
-                        className={"flex-1 py-3 px-4 rounded-lg font-bold border transition " + (shopType === 'restaurant' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50')}
+                        onClick={function() { setShopType('restaurant'); }}
+                        className={"flex-1 py-4 px-4 rounded-xl font-bold border-2 transition-all duration-200 " + (shopType === 'restaurant' ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300')}
                     >
-                        {"\uD83C\uDF74 Restaurant Menu"}
+                        {"\uD83C\uDF74 ร้านอาหาร (Menu)"}
                     </button>
                     <button 
-                        onClick={setMassage}
-                        className={"flex-1 py-3 px-4 rounded-lg font-bold border transition " + (shopType === 'massage' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50')}
+                        onClick={function() { setShopType('massage'); }}
+                        className={"flex-1 py-4 px-4 rounded-xl font-bold border-2 transition-all duration-200 " + (shopType === 'massage' ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300')}
                     >
-                        {"\uD83D\uDC86 Massage Shop"}
+                        {"\uD83D\uDC86 ร้านนวด (Massage)"}
                     </button>
                 </div>
             </div>
 
             <div className={"space-y-4 mb-6"}>
-                <div>
-                    <label className={"block text-sm font-medium text-gray-700"}>{"Upload Image File"}</label>
+                <div className={"p-6 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 text-center"}>
                     <input 
                         type={"file"} 
                         onChange={handleFileChange} 
                         accept={"image/*"}
-                        className={"mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"}
+                        id={"file-upload"}
+                        className={"hidden"}
                     />
+                    <label htmlFor={"file-upload"} className={"cursor-pointer"}>
+                        <div className={"text-4xl mb-2"}>{"\uD83D\uDCE4"}</div>
+                        <p className={"text-indigo-600 font-semibold"}>{"คลิกเพื่อเลือกรูปภาพเมนู"}</p>
+                        <p className={"text-xs text-gray-500 mt-1"}>{"(รองรับ .jpg, .png, .jpeg)"}</p>
+                        {file && <p className={"mt-2 text-sm font-bold text-green-600"}>{"เลือกไฟล์แล้ว: "}{(file as any).name}</p>}
+                    </label>
                 </div>
                 
                 <button 
                     onClick={runExtraction} 
                     disabled={isLoading || !file} 
-                    className={"w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:bg-green-400 disabled:cursor-not-allowed flex justify-center items-center"}
+                    className={"w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-4 rounded-xl transition duration-200 shadow-md disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"}
                 >
                     {isLoading && <LoadingSpinner />}
-                    {isLoading ? 'Extracting...' : 'Start AI Extraction'}
+                    {isLoading ? 'กำลังวิเคราะห์ข้อมูล...' : 'เริ่มแสกนด้วย AI'}
                 </button>
             </div>
 
-            {error && <div className={"mt-4 text-center text-red-600 bg-red-100 p-3 rounded-md"}>{error}</div>}
+            {error && <div className={"mt-4 text-center text-red-600 bg-red-100 p-4 rounded-xl border border-red-200"}>{error}</div>}
 
             {result && (
                 <div className={"mt-8 border-t pt-6"}>
-                    <h3 className={"text-xl font-semibold mb-4 text-gray-800"}>{"Extracted Data Result"}</h3>
-                    <div className={"bg-green-50 border-l-4 border-green-500 p-4 rounded-lg"}>
+                    <div className={"flex justify-between items-center mb-4"}>
+                        <h3 className={"text-xl font-semibold text-gray-800"}>{"ผลลัพธ์การแสกน"}</h3>
+                        <button 
+                            onClick={function() { navigator.clipboard.writeText(result); alert('คัดลอกแล้ว!'); }} 
+                            className={"bg-indigo-100 text-indigo-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-indigo-200 transition"}
+                        >
+                            {"คัดลอกข้อความ"}
+                        </button>
+                    </div>
+                    <div className={"bg-white border border-gray-200 p-4 rounded-xl shadow-inner"}>
                         <textarea 
                             value={result} 
                             readOnly 
-                            rows={15} 
-                            className={"mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-gray-800 text-sm bg-white font-sans"}
+                            rows={12} 
+                            className={"block w-full border-0 focus:ring-0 text-gray-800 text-sm bg-transparent font-sans leading-relaxed"}
                         ></textarea>
-                        <button 
-                            onClick={function() { navigator.clipboard.writeText(result); alert('Copied!'); }} 
-                            className={"mt-3 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition duration-200"}
-                        >
-                            {"Copy Extracted Data"}
-                        </button>
                     </div>
                 </div>
             )}
