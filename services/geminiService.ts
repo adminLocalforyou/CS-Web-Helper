@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult } from '../types';
 
@@ -26,7 +25,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
-        contents: `Analyze these URLs and return JSON:
+        contents: `Analyze these URLs and return JSON with keyFindings (string), qualitativeAssessment (string with ---TH--- separator), and emailDraft (Thai string):
 - Website: ${websiteUrl}
 - GMB: ${gmbUrl}
 - Facebook: ${facebookUrl}`,
@@ -50,7 +49,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
 export async function performAudit(auditType: AuditType, auditData: any) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
-    let prompt = `Operations audit for ${auditType}. Data: ${JSON.stringify(auditData)}. Return an array of audit items.`;
+    let prompt = `Operations audit for ${auditType}. Data: ${JSON.stringify(auditData)}. Return an array of audit items with status (PASS/FAIL/SUSPICIOUS), title, and detail.`;
 
     const response = await ai.models.generateContent({
         model,
@@ -80,7 +79,7 @@ export async function generateRcaSummary(failures: AuditResultItem[]) {
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
-        contents: `Audit failures: ${JSON.stringify(failures)}. Write RCA in Thai.`,
+        contents: `Audit failures: ${JSON.stringify(failures)}. Write a concise RCA in Thai.`,
     });
     return response.text;
 }
@@ -88,9 +87,24 @@ export async function generateRcaSummary(failures: AuditResultItem[]) {
 export async function extractMenuData(imageBase64: string, mimeType: string, shopType: 'restaurant' | 'massage' = 'restaurant') {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
-    const instructions = `Extract ${shopType} data precisely.`;
+    
+    let instructions = '';
+    if (shopType === 'restaurant') {
+        instructions = `You are a menu extraction expert. Identify all food items, prices, and descriptions. Output them clearly in this format for each item:
+[Item Name]
+Price : [Price]
+Description
+[Description text]
+---`;
+    } else {
+        instructions = `You are a massage service extraction expert. Identify all services, categories, durations, and prices. Output them clearly in this format:
+Category : [Category]
+[Service Name] [Duration] [Price]
+---`;
+    }
+
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: instructions };
+    const textPart = { text: instructions + "\n\nExtract all data from the provided image." };
     const response = await ai.models.generateContent({
         model,
         contents: { parts: [imagePart, textPart] },
@@ -102,7 +116,7 @@ export async function crossCheckMenu(webMenuUrl: string, imageBase64: string, mi
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: `Compare menu image with ${webMenuUrl}. Return JSON array.` };
+    const textPart = { text: `Compare menu image with ${webMenuUrl}. Return JSON array of objects with itemName, status (PASS/FAIL/WARN), mismatchDetails, webData (price, description), imageData (price, description).` };
 
     const response = await ai.models.generateContent({
         model,
@@ -134,7 +148,7 @@ export async function generateCommunicationScript(path: string) {
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
-        contents: `Communication script in Thai for: ${path}`,
+        contents: `Generate a polite Thai customer support script for this issue path: ${path}`,
     });
     return response.text;
 }
@@ -144,7 +158,7 @@ export async function generateEmailDraft(scenario: string, context: string, tone
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
-        contents: `Draft Thai email for ${scenario} with tone ${tone}. Context: ${context}`,
+        contents: `Draft a professional Thai email for scenario "${scenario}" using tone "${tone}". Context: ${context}`,
     });
     return response.text;
 }

@@ -60,6 +60,8 @@ function FallbackLogic() {
 interface StepBoxProps {
   index: number;
   step: string;
+  // Fix: Add optional key property to satisfy TypeScript when used in an array map
+  key?: any;
 }
 
 function StepBox({ index, step }: StepBoxProps) {
@@ -76,7 +78,7 @@ export const deliveryFlow: any = {
     title: '1. คนขับมาที่ร้านช้า/ร้านรอคนขับนาน',
     content: (
       <div className={"bg-green-100 border-l-4 border-green-500 text-green-800 p-4 rounded-lg mb-4 text-sm"}>
-        <p className={"font-bold"}>{"หมายเหตุ: โปรดตรวจสอบสถานะคนขับก่อนเริ่ม"}</p>
+        <p className={"font-bold"}>{"หมายเหตุ: โปรดตรวจสอบสถานะคนขับที่ "}{IHD_ADMIN_LINK}</p>
       </div>
     ),
     options: {
@@ -85,39 +87,121 @@ export const deliveryFlow: any = {
         options: {
           'wrong_phone': {
             title: '1. เบอร์โทรลูกค้าผิด/ไม่ครบ', isFinal: true,
-            content: <div className={"p-4"}>{"ขอเบอร์ลูกค้ามาใส่ใหม่ หรือใส่เบอร์ร้านแทนแล้วเรียกคนขับใหม่"}</div>
+            content: <div className={"p-4 bg-white border-l-4 border-indigo-500"}>{"ขอเบอร์ลูกค้ามาใส่ใหม่ หรือใส่เบอร์ร้านแทนแล้วเรียกคนขับใหม่"}</div>
           },
           'no_assign': {
             title: '2. ระบบ ไม่ assign คนขับ',
             options: {
               'store_delivers_no_assign': {
                 title: '1. ร้านไปส่งเอง', isFinal: true,
-                content: <div className={"p-4"}><p>{"ไปที่ IHD App -> Cancel Driver"}</p><FallbackLogic /></div>
+                content: <div className={"p-4 bg-white border-l-4 border-green-500"}><p>{"ไปที่ IHD App \u2192 Cancel Driver"}</p><FallbackLogic /></div>
+              },
+              'reassign': {
+                title: '2. เปลี่ยนคนขับ (Reassign)', isFinal: true,
+                content: <div className={"p-4 bg-white border-l-4 border-indigo-500"}>{"ตรวจสอบใน Admin \u2192 กดจุด 3 จุด \u2192 เลือก Reassign order ไปเจ้าอื่น (เช่น Uber)"}</div>
               }
             }
+          },
+          'redispatch': {
+            title: '3. Redispatch (เรียกคนขับคนใหม่)', isFinal: true,
+            content: (
+              <React.Fragment>
+                {['แจ้งร้านให้เรียกคนขับอีกครั้ง', 'ให้ร้านกดเข้าไปที่ออเดอร์นั้นๆ', 'กดจุด 3 จุดมุมบนขวา', 'กด Redispatch Order'].map(function(step, i) {
+                  return <StepBox key={i} index={i} step={step} />;
+                })}
+              </React.Fragment>
+            )
           }
         }
       },
       'cancel_driver': {
-        title: '2. ต้องการยกเลิกคนขับ', options: {
+        title: '2. ต้องการยกเลิกคนขับ',
+        options: {
           'store_delivers': { 
             title: '1. ร้านไปส่งเอง', isFinal: true, 
-            content: <div className={"p-4"}><p>{"ยกเลิกใน IHD App"}</p><FallbackLogic /></div>
+            content: <div className={"p-4 bg-white border-l-4 border-green-500"}><p>{"ยกเลิกใน IHD App"}</p><FallbackLogic /></div>
           }
         }
       }
     }
   },
+  'not-received': {
+    title: '2. คนขับนำอาหารไปแล้วแต่ลูกค้าไม่ได้รับ',
+    options: {
+      'wants_food': {
+        title: '1. ลูกค้าต้องการอาหารอยู่', options: {
+          'store_delivers': { 
+            title: '1. ร้านไปส่งเอง', isFinal: true, 
+            content: (
+              <TwoAppBoxes 
+                box1Title={"ร้านส่งเอง"} 
+                box1Content={"ร้านทำอาหารใหม่และนำไปส่งเอง"} 
+                box2Title={"IHD Refund"} 
+                box2Content={"กด Request Refund ใน IHD App เพื่อขอคืนค่าอาหาร"} 
+              />
+            )
+          },
+          'redispatch': {
+            title: '2. เรียกคนขับใหม่', isFinal: true,
+            content: <div className={"p-4"}>{"กด Redispatch ใน IHD App และกด Request Refund ของออเดอร์เดิมที่หาย"}</div>
+          }
+        }
+      },
+      'customer_cancels': {
+        title: '2. ลูกค้าต้องการยกเลิก', isFinal: true,
+        content: <div className={"p-4"}>{"Cancel Order ใน LFY App (Refund ลูกค้า) และ Request Refund ใน IHD App (Refund ร้าน)"}</div>
+      }
+    }
+  },
+  'cancel': {
+    title: '3. คนขับยกเลิกออเดอร์',
+    options: {
+      'before_pickup': {
+        title: '1. ยกเลิกก่อนรับอาหาร', options: {
+          'redispatch': { title: '1. เรียกคนใหม่ (Redispatch)', isFinal: true, content: <div className={"p-4"}>{"กด Redispatch Order"}</div> },
+          'store_delivers': { title: '2. ร้านส่งเอง', isFinal: true, content: <div className={"p-4"}>{"ร้านไปส่งเอง ไม่ต้องกดอะไรเพิ่ม"}</div> }
+        }
+      },
+      'after_pickup': {
+        title: '2. ยกเลิกหลังรับอาหารไปแล้ว', options: {
+          'wants_food': { title: '1. ลูกค้ายังต้องการอาหาร', isFinal: true, content: <div className={"p-4"}>{"ทำอาหารใหม่ + Redispatch + Request Refund ออเดอร์เดิม"}</div> },
+          'customer_cancels': { title: '2. ลูกค้ายกเลิก', isFinal: true, content: <div className={"p-4"}>{"Cancel ใน LFY App + Request Refund ใน IHD App"}</div> }
+        }
+      }
+    }
+  },
+  'missing-food': {
+    title: '4. อาหารไม่ครบ',
+    options: {
+      'refund': { title: '1. Refund เฉพาะส่วนที่ขาด', isFinal: true, content: <div className={"p-4"}>{"ทำ Partial Refund ผ่าน Stripe ให้ลูกค้า"}</div> },
+      'send_missing': {
+        title: '2. ส่งส่วนที่ขาดตามไป', options: {
+          'store_delivers': { title: '1. ร้านส่งเอง', isFinal: true, content: <div className={"p-4"}>{"ร้านนำของที่ขาดไปส่งเอง"}</div> },
+          'manual_call': { title: '2. เรียกคนขับใหม่ (Manual)', isFinal: true, content: <div className={"p-4"}>{"สร้าง Manual Order ใน IHD Admin เพื่อเรียกคนขับมารับของที่ขาด"}</div> }
+        }
+      }
+    }
+  },
+  'delivered-no-receive': {
+    title: '5. สถานะ Delivered แต่ลูกค้าไม่ได้รับ',
+    options: {
+      'wants_food': { title: '1. ลูกค้าต้องการอาหาร', isFinal: true, content: <div className={"p-4"}>{"ทำอาหารใหม่ + Redispatch + Request Refund ออเดอร์เดิม"}</div> },
+      'customer_cancels': { title: '2. ลูกค้ายกเลิก', isFinal: true, content: <div className={"p-4"}>{"Cancel ใน LFY App + Request Refund ใน IHD App"}</div> },
+      'wait_monitor': { title: '3. รอ/ติดตามสถานะ', isFinal: true, content: <div className={"p-4"}>{"แจ้งลูกค้าให้รอสักครู่ บางครั้งคนขับกดส่งก่อนถึงจริง"}</div> }
+    }
+  },
   'manual-call': {
-    title: 'Manually Call a New Driver',
+    title: '6. Manually Call a New Driver',
     isFinal: true,
     content: (
       <div className={"bg-white border-pink-500 p-4 rounded-md border-l-4"}>
-        <ol className={"list-decimal list-inside space-y-2"}>
-          <li>{"สอบถามเลข Order เดิม"}</li>
+        <h4 className={"font-bold text-pink-700 mb-2"}>{"ขั้นตอนการเรียกคนขับแบบ Manual:"}</h4>
+        <ol className={"list-decimal list-inside space-y-2 text-sm"}>
           <li>{"ไปที่ IHD Admin Panel"}</li>
-          <li>{"เลือก Create Order"}</li>
-          <li>{"กรอกข้อมูลลูกค้าและยืนยัน"}</li>
+          <li>{"เลือกเมนู Create Order"}</li>
+          <li>{"กรอกข้อมูลลูกค้า (ที่อยู่/เบอร์โทร)"}</li>
+          <li>{"ใส่ราคาสินค้า $0 (หากเป็นการส่งซ่อม/ของขาด)"}</li>
+          <li>{"กดเรียก Driver มารับที่ร้าน"}</li>
         </ol>
       </div>
     )
