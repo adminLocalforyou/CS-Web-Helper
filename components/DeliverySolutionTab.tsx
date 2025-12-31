@@ -49,8 +49,8 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
         setIsGenerating(true);
         setAiScript(null);
         const pathTitles = getPathAsTitles(path);
-        // Clean text for logging
-        const logPath = pathTitles.map(t => typeof t === 'string' ? t : 'Action').join(' -> ');
+        // Clean text for logging using Unicode arrow
+        const logPath = pathTitles.map(t => typeof t === 'string' ? t : 'Action').join(' \u2192 ');
         try {
             const script = await generateCommunicationScript(logPath);
             setAiScript(script);

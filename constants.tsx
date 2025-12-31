@@ -81,7 +81,7 @@ export const deliveryFlow: any = {
                                     <ol className="list-decimal list-inside space-y-2">
                                         <li>{"ตรวจสอบใน "}{IHD_ADMIN_LINK}{" ว่าออเดอร์อยู่ในสถานะ \"Searching\" หรือไม่"}</li>
                                         <li>{"Reassign order หากหาคนขับจาก doordash ไม่ได้"}</li>
-                                        <li>{"Reassign ไปที่ uber (เลือกออเดอร์ > กดจุด 3 จุดมุมขวาบน > เลือก "}<strong>{"reassign order"}</strong>{")"}</li>
+                                        <li>{"Reassign ไปที่ uber (เลือกออเดอร์ \u2192 กดจุด 3 จุดมุมขวาบน \u2192 เลือก "}<strong>{"reassign order"}</strong>{")"}</li>
                                     </ol>
                                 </div>
                             }
