@@ -4,12 +4,12 @@ import { generateCommunicationScript } from '../services/geminiService';
 import { deliveryFlow, IHD_ADMIN_LINK } from '../constants';
 import LoadingSpinner from './LoadingSpinner';
 
-const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
+const DeliverySolutionTab: React.FC<TabProps> = function({ addLog }) {
     const [path, setPath] = useState<string[]>([]);
     const [aiScript, setAiScript] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const getPathAsTitles = useCallback((currentPath: string[]) => {
+    const getPathAsTitles = useCallback(function(currentPath: string[]) {
         const titles: React.ReactNode[] = [];
         if (currentPath.length === 0) return titles;
 
@@ -29,28 +29,28 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
         return titles;
     }, []);
 
-    const resetFlow = () => {
+    const resetFlow = function() {
         setPath([]);
         setAiScript(null);
     };
 
-    const stepBack = () => {
-        setPath(prev => prev.slice(0, -1));
+    const stepBack = function() {
+        setPath(function(prev) { return prev.slice(0, -1); });
         setAiScript(null);
     };
 
-    const handleOptionSelect = (option: string) => {
-        setPath(prev => [...prev, option]);
+    const handleOptionSelect = function(option: string) {
+        setPath(function(prev) { return [...prev, option]; });
         setAiScript(null);
     };
 
-    const handleGenerateScript = useCallback(async () => {
+    const handleGenerateScript = useCallback(async function() {
         if (path.length === 0) return;
         setIsGenerating(true);
         setAiScript(null);
         const pathTitles = getPathAsTitles(path);
         // Clean text for logging using Unicode arrow
-        const logPath = pathTitles.map(t => typeof t === 'string' ? t : 'Action').join(' \u2192 ');
+        const logPath = pathTitles.map(function(t) { return typeof t === 'string' ? t : 'Action'; }).join(' \u2192 ');
         try {
             const script = await generateCommunicationScript(logPath);
             setAiScript(script);
@@ -58,20 +58,20 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
         } catch (error: any) {
             const errorMessage = 'Error generating script: ' + (error.message || String(error));
             setAiScript(errorMessage);
-            addLog('Communication Script Generation', { path: logPath }, `Error: ${errorMessage}`);
+            addLog('Communication Script Generation', { path: logPath }, 'Error: ' + errorMessage);
         } finally {
             setIsGenerating(false);
         }
     }, [path, getPathAsTitles, addLog]);
 
-    const copyToClipboard = () => {
+    const copyToClipboard = function() {
         if (aiScript) {
             navigator.clipboard.writeText(aiScript);
             alert('Script copied to clipboard!');
         }
     };
 
-    const getCurrentStep = () => {
+    const getCurrentStep = function() {
         if (path.length === 0) return null;
         let current: any = deliveryFlow[path[0]];
         for (let i = 1; i < path.length; i++) {
@@ -88,7 +88,7 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
     const pathTitles = getPathAsTitles(path);
 
     const isPathEmpty = (path.length === 0);
-    const canStepBack = (path.length >= 2);
+    const canStepBack = (path.length !== 0 && path.length !== 1);
 
     return (
         <section id={"delivery"}>
@@ -108,7 +108,7 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
 
                     <h3 className={"text-xl font-semibold mb-4 text-gray-800"}>{"ขั้นตอนที่ 1: เลือกประเภทปัญหาการจัดส่ง"}</h3>
                     <div className={"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
-                        {Object.entries(deliveryFlow).map(([key, value]: [string, any]) => {
+                        {Object.entries(deliveryFlow).map(function([key, value]: [string, any]) {
                             const isManualCall = (key === 'manual-call');
                             const btnClass = isManualCall 
                                 ? "bg-pink-100 text-pink-800 border-pink-300 hover:bg-pink-200" 
@@ -117,8 +117,8 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
                             return (
                                 <button 
                                     key={key} 
-                                    onClick={() => handleOptionSelect(key)} 
-                                    className={`${btnClass} py-3 px-4 rounded-lg font-medium border w-full text-left transition-all duration-200 h-full flex flex-col justify-center`}
+                                    onClick={function() { handleOptionSelect(key); }} 
+                                    className={btnClass + " py-3 px-4 rounded-lg font-medium border w-full text-left transition-all duration-200 h-full flex flex-col justify-center"}
                                 >
                                     {value.title}
                                 </button>
@@ -136,7 +136,7 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
                     <div className={"text-sm text-gray-700 mb-4 font-semibold"}>
                         {"เส้นทางดำเนินการ: "}
                         <span className={"text-indigo-700"}>
-                            {pathTitles.map((t, i) => {
+                            {pathTitles.map(function(t, i) {
                                 const isFirst = (i === 0);
                                 return (
                                     <React.Fragment key={i}>
@@ -155,9 +155,9 @@ const DeliverySolutionTab: React.FC<TabProps> = ({ addLog }) => {
                             <React.Fragment>
                                 <h4 className={"text-lg font-semibold text-gray-800 mb-3"}>{"เลือกการดำเนินการต่อไป:"}</h4>
                                 <div className={"space-y-3"}>
-                                    {Object.entries(currentStepData.options).map(([key, value]: [string, any]) => {
+                                    {Object.entries(currentStepData.options).map(function([key, value]: [string, any]) {
                                         return (
-                                            <button key={key} onClick={() => handleOptionSelect(key)} className={"bg-indigo-100 text-indigo-700 py-3 px-4 rounded-lg font-medium border border-indigo-300 w-full text-left hover:bg-indigo-200"}>
+                                            <button key={key} onClick={function() { handleOptionSelect(key); }} className={"bg-indigo-100 text-indigo-700 py-3 px-4 rounded-lg font-medium border border-indigo-300 w-full text-left hover:bg-indigo-200"}>
                                                 {value.title}
                                             </button>
                                         );

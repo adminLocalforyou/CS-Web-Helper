@@ -7,13 +7,15 @@ export const IHD_ADMIN_LINK = (
   </a>
 );
 
-const AppName: React.FC<{ name: string; underline?: boolean }> = ({ name, underline = true }) => {
+const AppName: React.FC<{ name: string; underline?: boolean }> = function({ name, underline = true }) {
   const className = underline ? "underline" : "no-underline";
-  const label = name.includes("Local for you") ? "Local for you App" : name.includes("IHD") ? "IHD App" : name;
+  const isLfy = name.indexOf("Local for you") !== -1;
+  const isIhd = name.indexOf("IHD") !== -1;
+  const label = isLfy ? "Local for you App" : (isIhd ? "IHD App" : name);
   return <span className={className}>{label}</span>;
 };
 
-const TwoAppBoxes: React.FC<{ box1Title: React.ReactNode; box1Content: React.ReactNode; box2Title: React.ReactNode; box2Content: React.ReactNode }> = ({ box1Title, box1Content, box2Title, box2Content }) => {
+const TwoAppBoxes: React.FC<{ box1Title: React.ReactNode; box1Content: React.ReactNode; box2Title: React.ReactNode; box2Content: React.ReactNode }> = function({ box1Title, box1Content, box2Title, box2Content }) {
   return (
     <div className={"grid grid-cols-1 md:grid-cols-2 gap-4"}>
       <div className={"p-4 bg-indigo-50 rounded-lg border border-indigo-200"}>
@@ -28,7 +30,7 @@ const TwoAppBoxes: React.FC<{ box1Title: React.ReactNode; box1Content: React.Rea
   );
 };
 
-const FallbackLogic: React.FC = () => {
+const FallbackLogic: React.FC = function() {
   return (
     <React.Fragment>
       <p className={"mt-3 font-bold text-red-600 text-xs"}>{"Note: จะยกเลิกได้ต่อเมื่อสถานะคนขับเป็น a waiting driver หรือ picking up ในระยะแรกๆ"}</p>
@@ -47,7 +49,7 @@ const FallbackLogic: React.FC = () => {
   );
 };
 
-const StepBox: React.FC<{ index: number; step: string }> = ({ index, step }) => {
+const StepBox: React.FC<{ index: number; step: string }> = function({ index, step }) {
   return (
     <div className={"p-4 bg-white rounded-lg border border-indigo-200 shadow-sm mb-3"}>
       <span className={"text-sm font-bold text-indigo-700"}>{"ขั้นตอน "}{(index + 1)}{":"}</span>
@@ -147,7 +149,7 @@ export const deliveryFlow: any = {
             title: '4. ร้านยังรอต่อโดยเรียกคนขับใหม่', isFinal: true, 
             content: (
               <React.Fragment>
-                {['แจ้งร้านให้เรียกคนขับอีกครั้ง', 'ให้ร้านกดเข้าไปที่ออเดอร์นั้นๆ', 'กดจุด 3 จุดมุมบนขวา', 'กด Redispatch Order'].map((step, i) => {
+                {['แจ้งร้านให้เรียกคนขับอีกครั้ง', 'ให้ร้านกดเข้าไปที่ออเดอร์นั้นๆ', 'กดจุด 3 จุดมุมบนขวา', 'กด Redispatch Order'].map(function(step, i) {
                   return <StepBox key={i} index={i} step={step} />;
                 })}
               </React.Fragment>
@@ -268,7 +270,7 @@ export const deliveryFlow: any = {
             title: '1. เรียกคนขับคนใหม่มารับอีกครั้ง', isFinal: true, 
             content: (
               <React.Fragment>
-                {['แจ้งร้านให้เรียกคนขับอีกครั้ง', 'ให้ร้านกดเข้าไปที่ออเดอร์นั้นๆ', 'กดจุด 3 จุดมุมบนขวา', 'กด Redispatch Order'].map((step, i) => {
+                {['แจ้งร้านให้เรียกคนขับอีกครั้ง', 'ให้ร้านกดเข้าไปที่ออเดอร์นั้นๆ', 'กดจุด 3 จุดมุมบนขวา', 'กด Redispatch Order'].map(function(step, i) {
                   return <StepBox key={i} index={i} step={step} />;
                 })}
               </React.Fragment>
@@ -359,7 +361,7 @@ export const deliveryFlow: any = {
                   'ขอข้อมูลที่อยู่จัดส่งที่ถูกต้องจากร้านค้าเพื่อสร้างออเดอร์จัดส่งใหม่สำหรับรายการที่ขาด',
                   'Manually Create Delivery order ผ่าน \uD83D\uDC49 IHD Admin Panel (ของร้านค้านั้นๆ)',
                   'กดเรียก Driver มารับอาหารที่ขาดเหลือที่ร้าน (ตรงนี้ทางร้านต้องจ่ายค่าจัดส่งเอง)'
-                ].map((step, i) => {
+                ].map(function(step, i) {
                   return <StepBox key={i} index={i} step={step} />;
                 })}
               </React.Fragment>

@@ -8,11 +8,11 @@ interface LogsTabProps {
     logs: LogEntry[];
 }
 
-const LogsTab: React.FC<LogsTabProps> = ({ logs }) => {
+const LogsTab: React.FC<LogsTabProps> = function({ logs }) {
     const chartRef = useRef<HTMLCanvasElement>(null);
     const chartInstanceRef = useRef<Chart | null>(null);
 
-    useEffect(() => {
+    useEffect(function() {
         if (!chartRef.current) return;
 
         if (chartInstanceRef.current) {
@@ -20,7 +20,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ logs }) => {
         }
 
         const hourlyCounts = Array(24).fill(0);
-        logs.forEach(log => {
+        logs.forEach(function(log) {
             const hour = new Date(log.timestamp).getHours();
             hourlyCounts[hour]++;
         });
@@ -30,7 +30,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ logs }) => {
             chartInstanceRef.current = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`),
+                    labels: Array.from({ length: 24 }, function(_, i) { return (i.toString().padStart(2, '0') + ":00"); }),
                     datasets: [{
                         label: 'AI Tool Usage (by hour)',
                         data: hourlyCounts,
@@ -57,7 +57,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ logs }) => {
             });
         }
 
-        return () => {
+        return function() {
             if (chartInstanceRef.current) {
                 chartInstanceRef.current.destroy();
                 chartInstanceRef.current = null;
@@ -80,18 +80,21 @@ const LogsTab: React.FC<LogsTabProps> = ({ logs }) => {
             <h3 className="text-xl font-semibold mb-4 text-gray-800">{"Recent Activity Log"}</h3>
             <div className="space-y-3">
                 {logs.length !== 0 ? (
-                    logs.map((log, index) => (
-                        <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className="flex justify-between items-center">
-                                <p className="font-bold text-sm text-indigo-600">{log.tool}</p>
-                                <p className="text-xs text-gray-500">{new Date(log.timestamp).toLocaleString()}</p>
+                    logs.map(function(log, index) {
+                        const statusColor = log.output.indexOf('Error') === 0 ? 'text-red-600' : 'text-green-600';
+                        return (
+                            <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="flex justify-between items-center">
+                                    <p className="font-bold text-sm text-indigo-600">{log.tool}</p>
+                                    <p className="text-xs text-gray-500">{new Date(log.timestamp).toLocaleString()}</p>
+                                </div>
+                                <p className="text-xs text-gray-700 truncate mt-1">{"Input: "}{JSON.stringify(log.input)}</p>
+                                <p className={"text-xs mt-1 font-medium " + statusColor}>
+                                    {"Status: "}{log.output}
+                                </p>
                             </div>
-                            <p className="text-xs text-gray-700 truncate mt-1">{"Input: "}{JSON.stringify(log.input)}</p>
-                            <p className={`text-xs mt-1 font-medium ${log.output.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
-                                {"Status: "}{log.output}
-                            </p>
-                        </div>
-                    ))
+                        );
+                    })
                 ) : (
                     <p className="text-gray-500 text-center py-4">{"No activity logs found for this session."}</p>
                 )}

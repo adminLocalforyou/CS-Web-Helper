@@ -3,7 +3,7 @@ import { TabProps, AuditType, AuditResultItem } from '../types';
 import { performAudit, generateRcaSummary } from '../services/geminiService';
 import LoadingSpinner from './LoadingSpinner';
 
-const AuditResultCard: React.FC<{ item: AuditResultItem }> = ({ item }) => {
+const AuditResultCard: React.FC<{ item: AuditResultItem }> = function({ item }) {
     const statusStyles = {
         PASS: 'border-green-500 bg-green-50',
         FAIL: 'border-red-500 bg-red-50',
@@ -20,15 +20,15 @@ const AuditResultCard: React.FC<{ item: AuditResultItem }> = ({ item }) => {
     const currentTextStyle = statusTextStyles[item.status] || statusTextStyles.FAIL;
 
     return (
-        <div className={`p-3 rounded-lg shadow-sm border-l-4 ${currentStyle}`}>
-            <span className={`float-right text-xs font-bold px-2 py-1 rounded-full ${currentTextStyle}`}>{item.status}</span>
+        <div className={"p-3 rounded-lg shadow-sm border-l-4 " + currentStyle}>
+            <span className={"float-right text-xs font-bold px-2 py-1 rounded-full " + currentTextStyle}>{item.status}</span>
             <p className={"font-bold text-gray-800"}>{item.title}</p>
             <p className={"text-xs text-gray-700 mt-1"}>{item.detail}</p>
         </div>
     );
 };
 
-const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
+const AuditSupportTab: React.FC<TabProps> = function({ addLog }) {
     const [activeAudit, setActiveAudit] = useState<AuditType>(AuditType.PostLive);
     const [inputs, setInputs] = useState({ website: '', gmb: '', facebook: '', otherData: '', bulkData: '' });
     const [fileName, setFileName] = useState('No file selected.');
@@ -38,34 +38,34 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
     const [results, setResults] = useState<AuditResultItem[] | null>(null);
     const [rca, setRca] = useState<string | null>(null);
 
-    useEffect(() => {
+    useEffect(function() {
         setResults(null);
         setError(null);
         setRca(null);
         setInputs({ website: '', gmb: '', facebook: '', otherData: '', bulkData: '' });
     }, [activeAudit]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleInputChange = function(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
         const { name, value } = e.target;
-        setInputs(prev => ({ ...prev, [name]: value }));
+        setInputs(function(prev) { return { ...prev, [name]: value }; });
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = function(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (event) => {
-                setInputs(prev => ({ ...prev, bulkData: event.target?.result as string }));
+            reader.onload = function(event) {
+                setInputs(function(prev) { return { ...prev, bulkData: event.target?.result as string }; });
                 setFileName(file.name);
             };
             reader.readAsDataURL(file);
         } else {
-            setInputs(prev => ({ ...prev, bulkData: '' }));
+            setInputs(function(prev) { return { ...prev, bulkData: '' }; });
             setFileName('No file selected.');
         }
     };
 
-    const runAudit = useCallback(async () => {
+    const runAudit = useCallback(async function() {
         setIsLoading(true);
         setError(null);
         setResults(null);
@@ -85,19 +85,19 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
         try {
             const auditResults = await performAudit(activeAudit, auditData);
             setResults(auditResults);
-            addLog(`${activeAudit} Audit`, auditData, 'Success');
+            addLog(activeAudit + " Audit", auditData, 'Success');
         } catch (err: any) {
             const errorMessage = err.message || 'An unknown error occurred during audit.';
             setError(errorMessage);
-            addLog(`${activeAudit} Audit`, auditData, `Error: ${errorMessage}`);
+            addLog(activeAudit + " Audit", auditData, "Error: " + errorMessage);
         } finally {
             setIsLoading(false);
         }
     }, [activeAudit, inputs, addLog]);
 
-    const generateRca = useCallback(async () => {
+    const generateRca = useCallback(async function() {
         if (!results) return;
-        const failedItems = results.filter((r) => r.status === 'FAIL' || r.status === 'SUSPICIOUS');
+        const failedItems = results.filter(function(r) { return r.status === 'FAIL' || r.status === 'SUSPICIOUS'; });
         if (failedItems.length === 0) return;
 
         setIsRcaLoading(true);
@@ -107,9 +107,9 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
             setRca(rcaSummary);
             addLog('RCA Generation', { failedItems }, 'Success');
         } catch (err: any) {
-            const errorMessage = `Error generating RCA: ${err.message || String(err)}`;
+            const errorMessage = "Error generating RCA: " + (err.message || String(err));
             setRca(errorMessage);
-            addLog('RCA Generation', { failedItems }, `Error: ${errorMessage}`);
+            addLog('RCA Generation', { failedItems }, "Error: " + errorMessage);
         } finally {
             setIsRcaLoading(false);
         }
@@ -121,7 +121,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
         { id: AuditType.GmbBulk, label: '3. GMB Link Audit' },
     ];
 
-    const hasAuditFailures = results !== null && results.some((r) => r.status === 'FAIL' || r.status === 'SUSPICIOUS');
+    const hasAuditFailures = results !== null && results.some(function(r) { return r.status === 'FAIL' || r.status === 'SUSPICIOUS'; });
 
     return (
         <section id={"audit"}>
@@ -129,16 +129,13 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
             <p className={"text-gray-600 mb-6"}>{"Tools to assist with monthly quality audits across various operational checks."}</p>
 
             <div className={"flex flex-wrap border-b border-gray-200 mb-6"}>
-                 {auditTabs.map((tab) => {
+                 {auditTabs.map(function(tab) {
+                    const isActive = activeAudit === tab.id;
                     return (
                         <button 
                             key={tab.id}
-                            onClick={() => setActiveAudit(tab.id)} 
-                            className={`px-4 py-3 text-sm font-semibold border-b-2 transition ${
-                                activeAudit === tab.id 
-                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
-                                : 'border-transparent text-gray-600 hover:border-gray-300'
-                            }`}
+                            onClick={function() { setActiveAudit(tab.id); }} 
+                            className={"px-4 py-3 text-sm font-semibold border-b-2 transition " + (isActive ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-transparent text-gray-600 hover:border-gray-300')}
                         >
                             {tab.label}
                         </button>
@@ -172,7 +169,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                         <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{"3. GMB Link Audit"}</h3>
                         <div className={"flex items-center space-x-2"}>
                             <label className={"bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200 w-full flex-grow text-center cursor-pointer"}>
-                                {"\u1F4E4 Upload CSV/Text File"}
+                                {"\uD83D\uDCE4 Upload CSV/Text File"}
                                 <input type={"file"} onChange={handleFileChange} className={"hidden"} accept={".csv, .txt"}/>
                             </label>
                             <span className={"text-xs text-gray-500 truncate"}>{fileName}</span>
@@ -192,7 +189,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                 <div className={"mt-8 pt-6 border-t"}>
                     <h3 className={"text-xl font-semibold mb-4 text-gray-800"}>{"Audit Result Summary"}</h3>
                     <div className={"space-y-3"}>
-                        {(results.length !== 0) ? results.map((item, index) => {
+                        {(results.length !== 0) ? results.map(function(item, index) {
                             return <AuditResultCard key={index} item={item}/>;
                         }) : (
                             <div className={"p-3 rounded-lg bg-green-50 border-green-500 border-l-4"}>{"\u2705 All checks passed."}</div>
