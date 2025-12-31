@@ -50,7 +50,7 @@ const FallbackLogic: React.FC = () => {
 const StepBox: React.FC<{ index: number; step: string }> = ({ index, step }) => {
   return (
     <div className={"p-4 bg-white rounded-lg border border-indigo-200 shadow-sm mb-3"}>
-      <span className={"text-sm font-bold text-indigo-700"}>{"ขั้นตอน "}{index + 1}{":"}</span>
+      <span className={"text-sm font-bold text-indigo-700"}>{"ขั้นตอน "}{(index + 1)}{":"}</span>
       <p className={"mt-1 text-gray-800"}>{step}</p>
     </div>
   );

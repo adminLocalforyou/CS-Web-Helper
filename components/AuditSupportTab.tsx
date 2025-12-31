@@ -172,7 +172,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                         <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{"3. GMB Link Audit"}</h3>
                         <div className={"flex items-center space-x-2"}>
                             <label className={"bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200 w-full flex-grow text-center cursor-pointer"}>
-                                {"📤 Upload CSV/Text File"}
+                                {"\u1F4E4 Upload CSV/Text File"}
                                 <input type={"file"} onChange={handleFileChange} className={"hidden"} accept={".csv, .txt"}/>
                             </label>
                             <span className={"text-xs text-gray-500 truncate"}>{fileName}</span>
@@ -182,7 +182,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                 )}
                 <button onClick={runAudit} disabled={isLoading} className={"mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 w-full disabled:bg-indigo-300 flex justify-center items-center"}>
                     {isLoading && <LoadingSpinner />}
-                    {isLoading ? "Running Check..." : `Run ${activeAudit.replace('-', ' ')} Check`}
+                    {isLoading ? "Running Check..." : "Run " + activeAudit.replace('-', ' ') + " Check"}
                 </button>
             </div>
 
@@ -192,7 +192,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                 <div className={"mt-8 pt-6 border-t"}>
                     <h3 className={"text-xl font-semibold mb-4 text-gray-800"}>{"Audit Result Summary"}</h3>
                     <div className={"space-y-3"}>
-                        {results.length > 0 ? results.map((item, index) => {
+                        {(results.length !== 0) ? results.map((item, index) => {
                             return <AuditResultCard key={index} item={item}/>;
                         }) : (
                             <div className={"p-3 rounded-lg bg-green-50 border-green-500 border-l-4"}>{"\u2705 All checks passed."}</div>
@@ -203,7 +203,8 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
                         <div className={"mt-4"}>
                             <button onClick={generateRca} disabled={isRcaLoading} className={"w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:bg-purple-400 flex justify-center items-center"}>
                                 {isRcaLoading && <LoadingSpinner />}
-                                {isRcaLoading ? "Generating..." : "✨ Generate Root Cause Analysis (RCA) Summary"}
+                                {/* Fixed: Using isRcaLoading instead of undefined isGenerating */}
+                                {isRcaLoading ? "Generating..." : "\u2728 Generate Root Cause Analysis (RCA) Summary"}
                             </button>
                             {rca && (
                                 <div className={"mt-4 p-4 bg-yellow-50 rounded-lg"}>
