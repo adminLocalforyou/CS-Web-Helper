@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, Fragment } from 'react';
 import { TabProps, AuditType, AuditResultItem } from '../types';
 import { performAudit, generateRcaSummary } from '../services/geminiService';
 import LoadingSpinner from './LoadingSpinner';
@@ -93,9 +93,7 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
 
     const generateRca = useCallback(async () => {
         if (!results) return;
-        const failedItems = results.filter((r) => {
-            return r.status === 'FAIL' || r.status === 'SUSPICIOUS';
-        });
+        const failedItems = results.filter((r) => r.status === 'FAIL' || r.status === 'SUSPICIOUS');
         if (failedItems.length === 0) return;
 
         setIsRcaLoading(true);
@@ -117,76 +115,68 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
         { id: AuditType.PostLive, label: '1. POST LIVE Audit' },
         { id: AuditType.Cancellation, label: '2. Cancellation Audit' },
         { id: AuditType.GmbBulk, label: '3. GMB Link Audit' },
-    ]
+    ];
 
-    // Pre-calculated booleans to avoid comparison operators in JSX
-    const hasResults = (results !== null && results.length !== 0);
-    const allPassed = (results !== null && results.length === 0);
-    const isCancellationAudit = (activeAudit === AuditType.Cancellation);
-    const hasAuditFailures = (results !== null && results.some((r) => {
-        return r.status === 'FAIL' || r.status === 'SUSPICIOUS';
-    }));
+    const hasAuditFailures = results !== null && results.some((r) => r.status === 'FAIL' || r.status === 'SUSPICIOUS');
 
     return (
         <section id="audit">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Audit Support (AI Assisted)</h2>
-            <p className="text-gray-600 mb-6">Tools to assist with monthly quality audits across various operational checks.</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">{"Audit Support (AI Assisted)"}</h2>
+            <p className="text-gray-600 mb-6">{"Tools to assist with monthly quality audits across various operational checks."}</p>
 
             <div className="flex flex-wrap border-b border-gray-200 mb-6">
-                 {auditTabs.map((tab) => {
-                     return (
-                         <button 
-                            key={tab.id}
-                            onClick={() => setActiveAudit(tab.id)} 
-                            className={`px-4 py-3 text-sm font-semibold border-b-2 transition ${
-                                activeAudit === tab.id 
-                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
-                                : 'border-transparent text-gray-600 hover:border-gray-300'
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                     );
-                 })}
+                 {auditTabs.map((tab) => (
+                    <button 
+                        key={tab.id}
+                        onClick={() => setActiveAudit(tab.id)} 
+                        className={`px-4 py-3 text-sm font-semibold border-b-2 transition ${
+                            activeAudit === tab.id 
+                            ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
+                            : 'border-transparent text-gray-600 hover:border-gray-300'
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                 ))}
             </div>
 
             <div className="p-6 border rounded-lg shadow-md bg-white">
                 {activeAudit === AuditType.PostLive && (
-                     <>
-                        <h3 className="text-xl font-semibold mb-4 text-indigo-600">1. POST LIVE Audit Checklist</h3>
+                    <Fragment>
+                        <h3 className="text-xl font-semibold mb-4 text-indigo-600">{"1. POST LIVE Audit Checklist"}</h3>
                         <div className="space-y-3">
                             <input type="url" name="website" value={inputs.website} onChange={handleInputChange} placeholder="Website URL" className="block w-full rounded-md border-gray-300 p-2 border"/>
                             <input type="url" name="gmb" value={inputs.gmb} onChange={handleInputChange} placeholder="GMB Link" className="block w-full rounded-md border-gray-300 p-2 border"/>
                             <input type="url" name="facebook" value={inputs.facebook} onChange={handleInputChange} placeholder="Facebook Page URL" className="block w-full rounded-md border-gray-300 p-2 border"/>
                             <textarea name="otherData" value={inputs.otherData} onChange={handleInputChange} rows={3} placeholder="Other Data (e.g., Tax status, Delivery Zone)" className="block w-full rounded-md border-gray-300 p-2 border"></textarea>
                         </div>
-                    </>
+                    </Fragment>
                 )}
-                {isCancellationAudit && (
-                     <>
-                        <h3 className="text-xl font-semibold mb-4 text-indigo-600">2. Cancellation Audit Checklist</h3>
+                {activeAudit === AuditType.Cancellation && (
+                    <Fragment>
+                        <h3 className="text-xl font-semibold mb-4 text-indigo-600">{"2. Cancellation Audit Checklist"}</h3>
                         <div className="space-y-3">
                             <input type="url" name="website" value={inputs.website} onChange={handleInputChange} placeholder="Website URL" className="block w-full rounded-md border-gray-300 p-2 border"/>
                             <input type="url" name="gmb" value={inputs.gmb} onChange={handleInputChange} placeholder="GMB Link" className="block w-full rounded-md border-gray-300 p-2 border"/>
                         </div>
-                    </>
+                    </Fragment>
                 )}
                 {activeAudit === AuditType.GmbBulk && (
-                    <>
-                        <h3 className="text-xl font-semibold mb-4 text-indigo-600">3. GMB Link Audit</h3>
+                    <Fragment>
+                        <h3 className="text-xl font-semibold mb-4 text-indigo-600">{"3. GMB Link Audit"}</h3>
                         <div className="flex items-center space-x-2">
-                                <label className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200 w-full flex-grow text-center cursor-pointer">
-                                    📤 Upload CSV/Text File
+                            <label className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200 w-full flex-grow text-center cursor-pointer">
+                                {"📤 Upload CSV/Text File"}
                                 <input type="file" onChange={handleFileChange} className="hidden" accept=".csv, .txt"/>
                             </label>
                             <span className="text-xs text-gray-500 truncate">{fileName}</span>
                         </div>
-                        <textarea name="bulkData" value={inputs.bulkData} onChange={handleInputChange} rows={4} placeholder="Or paste data here (e.g., Store Name, GMB Link, Correct Website Link...)" className="mt-3 block w-full rounded-md border-gray-300 p-2 border"></textarea>
-                    </>
+                        <textarea name="bulkData" value={inputs.bulkData} onChange={handleInputChange} rows={4} placeholder="Or paste data here..." className="mt-3 block w-full rounded-md border-gray-300 p-2 border"></textarea>
+                    </Fragment>
                 )}
                 <button onClick={runAudit} disabled={isLoading} className="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 w-full disabled:bg-indigo-300 flex justify-center items-center">
-                    {isLoading && <LoadingSpinner/>}
-                    {isLoading ? 'Running Check...' : `Run ${activeAudit.replace('-', ' ')} Check`}
+                    {isLoading && <LoadingSpinner />}
+                    {isLoading ? 'Running Check...' : 'Run ' + activeAudit.replace('-', ' ') + ' Check'}
                 </button>
             </div>
 
@@ -194,23 +184,24 @@ const AuditSupportTab: React.FC<TabProps> = ({ addLog }) => {
 
             {results !== null && (
                 <div className="mt-8 pt-6 border-t">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-800">Audit Result Summary</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-800">{"Audit Result Summary"}</h3>
                     <div className="space-y-3">
-                        {hasResults ? results.map((item, index) => {
-                            return <AuditResultCard key={index} item={item}/>;
-                        }) : null}
-                        {allPassed ? <div className="p-3 rounded-lg bg-green-50 border-green-500 border-l-4">✅ All checks passed.</div> : null}
+                        {results.length > 0 ? results.map((item, index) => (
+                            <AuditResultCard key={index} item={item}/>
+                        )) : (
+                            <div className="p-3 rounded-lg bg-green-50 border-green-500 border-l-4">{"✅ All checks passed."}</div>
+                        )}
                     </div>
 
-                    {(isCancellationAudit && hasAuditFailures) && (
+                    {(activeAudit === AuditType.Cancellation && hasAuditFailures) && (
                         <div className="mt-4">
                             <button onClick={generateRca} disabled={isRcaLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:bg-purple-400 flex justify-center items-center">
-                                {isRcaLoading && <LoadingSpinner/>}
+                                {isRcaLoading && <LoadingSpinner />}
                                 {isRcaLoading ? 'Generating...' : '✨ Generate Root Cause Analysis (RCA) Summary'}
                             </button>
                             {rca && (
                                 <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
-                                    <p className="font-bold text-red-700">📌 Root Cause Analysis (RCA) Summary</p>
+                                    <p className="font-bold text-red-700">{"📌 Root Cause Analysis (RCA) Summary"}</p>
                                     <p className="text-sm mt-1 text-gray-800 whitespace-pre-wrap">{rca}</p>
                                 </div>
                             )}
