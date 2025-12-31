@@ -1,26 +1,25 @@
-
 import React, { useState, useCallback } from 'react';
 import { TabProps } from '../types';
 import { extractMenuData } from '../services/geminiService';
 import LoadingSpinner from './LoadingSpinner';
 
 function ExtractionTab({ addLog }: TabProps) {
-    const [file, setFile] = useState<File | null>(null);
-    const [imageBase64, setImageBase64] = useState<string | null>(null);
+    const [file, setFile] = useState(null);
+    const [imageBase64, setImageBase64] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [result, setResult] = useState<string | null>(null);
-    const [shopType, setShopType] = useState<'restaurant' | 'massage'>('restaurant');
+    const [error, setError] = useState(null);
+    const [result, setResult] = useState(null);
+    const [shopType, setShopType] = useState('restaurant');
 
     const handleFileChange = function(e: React.ChangeEvent<HTMLInputElement>) {
-        const selectedFile = e.target.files?.[0];
+        const selectedFile = e.target.files ? e.target.files[0] : null;
         if (selectedFile) {
             setFile(selectedFile);
             const reader = new FileReader();
             reader.onloadend = function() {
                 const res = String(reader.result);
                 const parts = res.split(',');
-                if (parts.length > 1) {
+                if (parts.length !== 1) {
                     setImageBase64(parts[1]);
                 }
             };
@@ -34,9 +33,10 @@ function ExtractionTab({ addLog }: TabProps) {
         setError(null);
         setResult(null);
         try {
-            const extractedData = await extractMenuData(imageBase64, file.type, shopType);
+            const castFile = file as any;
+            const extractedData = await extractMenuData(imageBase64, castFile.type, shopType as any);
             setResult(extractedData);
-            addLog('AI Scan Text', { fileName: file.name, shopType }, 'Success');
+            addLog('AI Scan Text', { fileName: castFile.name, shopType }, 'Success');
         } catch (err: any) {
             setError(err.message || 'Error');
         } finally {

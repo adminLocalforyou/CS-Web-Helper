@@ -1,29 +1,26 @@
-
 import React, { useState, useCallback } from 'react';
 import { TabProps, MenuCheckResultItem } from '../types';
 import { crossCheckMenu } from '../services/geminiService';
 import LoadingSpinner from './LoadingSpinner';
 
-// Added key to props to resolve Type '{ key: any; item: any; }' is not assignable to type 'ResultItemCardProps'
 interface ResultItemCardProps {
     item: MenuCheckResultItem;
     key?: any;
 }
 
 function ResultItemCard({ item }: ResultItemCardProps) {
-    // Added 'text' property to PASS to ensure type consistency across all statuses
     const statusStyles = {
         PASS: { card: 'border-green-500 bg-green-50', badge: 'bg-green-500', text: '' },
         FAIL: { card: 'border-red-500 bg-red-50', badge: 'bg-red-500', text: 'text-red-700' },
         WARN: { card: 'border-amber-500 bg-amber-50', badge: 'bg-amber-500', text: 'text-amber-700' }
     };
-    const styles = statusStyles[item.status] || statusStyles.FAIL;
+    const styles = (statusStyles as any)[item.status] || statusStyles.FAIL;
     const isPass = item.status === 'PASS';
 
     return (
         <div className={"p-4 rounded-lg shadow-md border-l-4 " + styles.card}>
-            <div className="flex justify-between items-start">
-                <h4 className="text-lg font-bold text-gray-800">{item.itemName}</h4>
+            <div className={"flex justify-between items-start"}>
+                <h4 className={"text-lg font-bold text-gray-800"}>{item.itemName}</h4>
                 <span className={"px-3 py-1 text-xs font-bold text-white rounded-full " + styles.badge}>
                     {item.status}
                 </span>
@@ -31,27 +28,27 @@ function ResultItemCard({ item }: ResultItemCardProps) {
             {!isPass && (
                 <React.Fragment>
                     <p className={"mt-2 text-sm font-semibold " + (styles.text || '')}>{item.mismatchDetails}</p>
-                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-3">
+                    <div className={"mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-3"}>
                         <div>
-                            <p className="text-sm font-semibold text-gray-600 mb-1">{"Website Data"}</p>
+                            <p className={"text-sm font-semibold text-gray-600 mb-1"}>{"Website Data"}</p>
                             {item.webData ? (
-                                <div className="text-xs text-gray-700 space-y-1">
-                                    <p><span className="font-medium">{"Price:"}</span> {item.webData.price || 'N/A'}</p>
-                                    <p><span className="font-medium">{"Description:"}</span> {item.webData.description || 'N/A'}</p>
+                                <div className={"text-xs text-gray-700 space-y-1"}>
+                                    <p><span className={"font-medium"}>{"Price:"}</span> {item.webData.price || 'N/A'}</p>
+                                    <p><span className={"font-medium"}>{"Description:"}</span> {item.webData.description || 'N/A'}</p>
                                 </div>
                             ) : (
-                                <p className="text-xs text-gray-500 italic">{"Item not found on website."}</p>
+                                <p className={"text-xs text-gray-500 italic"}>{"Item not found on website."}</p>
                             )}
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-gray-600 mb-1">{"Image Data"}</p>
+                            <p className={"text-sm font-semibold text-gray-600 mb-1"}>{"Image Data"}</p>
                             {item.imageData ? (
-                                <div className="text-xs text-gray-700 space-y-1">
-                                    <p><span className="font-medium">{"Price:"}</span> {item.imageData.price || 'N/A'}</p>
-                                    <p><span className="font-medium">{"Description:"}</span> {item.imageData.description || 'N/A'}</p>
+                                <div className={"text-xs text-gray-700 space-y-1"}>
+                                    <p><span className={"font-medium"}>{"Price:"}</span> {item.imageData.price || 'N/A'}</p>
+                                    <p><span className={"font-medium"}>{"Description:"}</span> {item.imageData.description || 'N/A'}</p>
                                 </div>
                             ) : (
-                                <p className="text-xs text-gray-500 italic">{"Item not found in image."}</p>
+                                <p className={"text-xs text-gray-500 italic"}>{"Item not found in image."}</p>
                             )}
                         </div>
                     </div>
@@ -63,20 +60,23 @@ function ResultItemCard({ item }: ResultItemCardProps) {
 
 function MenuCheckTab({ addLog }: TabProps) {
     const [webMenuUrl, setWebMenuUrl] = useState('');
-    const [file, setFile] = useState<File | null>(null);
-    const [imageBase64, setImageBase64] = useState<string | null>(null);
+    const [file, setFile] = useState(null);
+    const [imageBase64, setImageBase64] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [results, setResults] = useState<MenuCheckResultItem[] | null>(null);
+    const [error, setError] = useState(null);
+    const [results, setResults] = useState(null);
 
     const handleFileChange = function(e: React.ChangeEvent<HTMLInputElement>) {
-        const selectedFile = e.target.files?.[0];
+        const selectedFile = e.target.files ? e.target.files[0] : null;
         if (selectedFile && selectedFile.type.startsWith('image/')) {
-            setFile(selectedFile);
+            setFile(selectedFile as any);
             const reader = new FileReader();
             reader.onloadend = function() {
-                const base64String = (reader.result as string)?.split(',')[1];
-                setImageBase64(base64String);
+                const res = String(reader.result);
+                const parts = res.split(',');
+                if (parts.length !== 1) {
+                    setImageBase64(parts[1] as any);
+                }
             };
             reader.readAsDataURL(selectedFile);
         } else {
@@ -88,68 +88,69 @@ function MenuCheckTab({ addLog }: TabProps) {
 
     const runCrossCheck = useCallback(async function() {
         if (!webMenuUrl || !imageBase64 || !file) {
-            setError('Please provide a URL and upload a menu image.');
+            setError('Please provide a URL and upload a menu image.' as any);
             return;
         }
         setIsLoading(true);
         setError(null);
         setResults(null);
         try {
-            const checkResult = await crossCheckMenu(webMenuUrl, imageBase64, file.type);
-            setResults(checkResult);
-            addLog('Menu Cross-Check', { webMenuUrl, fileName: file.name }, 'Success');
+            const castFile = file as any;
+            const checkResult = await crossCheckMenu(webMenuUrl, imageBase64, castFile.type);
+            setResults(checkResult as any);
+            addLog('Menu Cross-Check', { webMenuUrl, fileName: castFile.name }, 'Success');
         } catch (err: any) {
             const errorMessage = err.message || 'An unknown error occurred.';
-            setError(errorMessage);
-            addLog('Menu Cross-Check', { webMenuUrl, fileName: file.name }, "Error: " + errorMessage);
+            setError(errorMessage as any);
+            addLog('Menu Cross-Check', { webMenuUrl, fileName: (file as any).name }, "Error: " + errorMessage);
         } finally {
             setIsLoading(false);
         }
     }, [webMenuUrl, imageBase64, file, addLog]);
 
     return (
-        <section id="menu">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">{"Menu Cross-Check"}</h2>
-            <p className="text-gray-600 mb-6">{"AI tool to cross-reference menu data between the website link and a given image file data to check for human errors (Description, Pricing)."}</p>
+        <section id={"menu"}>
+            <h2 className={"text-2xl font-bold text-gray-800 mb-4"}>{"Menu Cross-Check"}</h2>
+            <p className={"text-gray-600 mb-6"}>{"AI tool to cross-reference menu data between the website link and a given image file data to check for human errors (Description, Pricing)."}</p>
 
-            <div className="space-y-4 mb-6">
+            <div className={"space-y-4 mb-6"}>
                 <div>
-                    <label htmlFor="web-menu-url" className="block text-sm font-medium text-gray-700">{"Website Menu Link"}</label>
-                    <input type="url" id="web-menu-url" value={webMenuUrl} onChange={function(e) { setWebMenuUrl(e.target.value); }} placeholder="e.g., https://www.store.com/menu" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+                    <label htmlFor={"web-menu-url"} className={"block text-sm font-medium text-gray-700"}>{"Website Menu Link"}</label>
+                    <input type={"url"} id={"web-menu-url"} value={webMenuUrl} onChange={function(e) { setWebMenuUrl(e.target.value); }} placeholder={"e.g., https://www.store.com/menu"} className={"mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"} />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">{"Upload Menu Image File for Cross-Check"}</label>
-                    <div className="flex items-center space-x-2 mt-1">
-                        <label className="bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-semibold py-2 px-4 rounded-lg transition duration-200 flex-grow text-center cursor-pointer">
+                    <label className={"block text-sm font-medium text-gray-700"}>{"Upload Menu Image File for Cross-Check"}</label>
+                    <div className={"flex items-center space-x-2 mt-1"}>
+                        <label className={"bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-semibold py-2 px-4 rounded-lg transition duration-200 flex-grow text-center cursor-pointer"}>
                             {"\uD83D\uDDBC\uFE0F Select Menu Image (.jpg, .png)"}
-                            <input type="file" onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg" />
+                            <input type={"file"} onChange={handleFileChange} className={"hidden"} accept={"image/png, image/jpeg"} />
                         </label>
-                        <span className="text-xs text-gray-500 truncate">{file?.name || 'No file selected.'}</span>
+                        <span className={"text-xs text-gray-500 truncate"}>{(file as any)?.name || 'No file selected.'}</span>
                     </div>
                 </div>
             </div>
 
-            <button onClick={runCrossCheck} disabled={isLoading || !webMenuUrl || !file} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:bg-indigo-400 disabled:cursor-not-allowed flex justify-center items-center">
+            <button onClick={runCrossCheck} disabled={isLoading || !webMenuUrl || !file} className={"w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:bg-indigo-400 disabled:cursor-not-allowed flex justify-center items-center"}>
                 {isLoading && <LoadingSpinner />}
                 {isLoading ? 'Checking...' : 'Start Menu Cross-Check'}
             </button>
 
-            {error && <div className="mt-4 text-center text-red-600 bg-red-100 p-3 rounded-md">{error}</div>}
+            {error && <div className={"mt-4 text-center text-red-600 bg-red-100 p-3 rounded-md"}>{error}</div>}
 
             {isLoading && (
-                <div className="mt-8 border-t pt-6 text-center">
-                    <div className="flex justify-center items-center">
+                <div className={"mt-8 border-t pt-6 text-center"}>
+                    <div className={"flex justify-center items-center"}>
                       <LoadingSpinner />
-                      <p className="ml-2 text-gray-600">{"AI is analyzing the menu and website..."}</p>
+                      <p className={"ml-2 text-gray-600"}>{"AI is analyzing the menu and website..."}</p>
                     </div>
                 </div>
             )}
 
             {results && (
-                <div className="mt-8 border-t pt-6">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-800">{"AI Cross-Check Report"}</h3>
-                    <div className="space-y-4">
-                        {results.map(function(item, index) {
+                <div className={"mt-8 border-t pt-6"}>
+                    <h3 className={"text-xl font-semibold mb-4 text-gray-800"}>{"AI Cross-Check Report"}</h3>
+                    <div className={"space-y-4"}>
+                        {(results as any).map(function(item: any, index: number) {
                             return <ResultItemCard key={index} item={item} />;
                         })}
                     </div>

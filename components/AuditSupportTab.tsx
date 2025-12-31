@@ -1,10 +1,8 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { TabProps, AuditType, AuditResultItem } from '../types';
 import { performAudit, generateRcaSummary } from '../services/geminiService';
 import LoadingSpinner from './LoadingSpinner';
 
-// Added key to props to resolve Type '{ key: any; item: any; }' is not assignable to type 'AuditResultCardProps'
 interface AuditResultCardProps {
     item: AuditResultItem;
     key?: any;
@@ -23,8 +21,8 @@ function AuditResultCard({ item }: AuditResultCardProps) {
         WARN: 'bg-amber-500 text-white',
         SUSPICIOUS: 'bg-amber-500 text-white'
     };
-    const currentStyle = statusStyles[item.status] || statusStyles.FAIL;
-    const currentTextStyle = statusTextStyles[item.status] || statusTextStyles.FAIL;
+    const currentStyle = (statusStyles as any)[item.status] || statusStyles.FAIL;
+    const currentTextStyle = (statusTextStyles as any)[item.status] || statusTextStyles.FAIL;
 
     return (
         <div className={"p-3 rounded-lg shadow-sm border-l-4 " + currentStyle}>
@@ -36,14 +34,14 @@ function AuditResultCard({ item }: AuditResultCardProps) {
 }
 
 function AuditSupportTab({ addLog }: TabProps) {
-    const [activeAudit, setActiveAudit] = useState<AuditType>(AuditType.PostLive);
+    const [activeAudit, setActiveAudit] = useState(AuditType.PostLive);
     const [inputs, setInputs] = useState({ website: '', gmb: '', facebook: '', otherData: '', bulkData: '' });
     const [fileName, setFileName] = useState('No file selected.');
     const [isLoading, setIsLoading] = useState(false);
     const [isRcaLoading, setIsRcaLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [results, setResults] = useState<AuditResultItem[] | null>(null);
-    const [rca, setRca] = useState<string | null>(null);
+    const [error, setError] = useState(null);
+    const [results, setResults] = useState(null);
+    const [rca, setRca] = useState(null);
 
     useEffect(function() {
         setResults(null);
@@ -58,7 +56,7 @@ function AuditSupportTab({ addLog }: TabProps) {
     };
 
     const handleFileChange = function(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0];
+        const file = e.target.files ? e.target.files[0] : null;
         if (file) {
             const reader = new FileReader();
             reader.onload = function(event) {
@@ -91,11 +89,11 @@ function AuditSupportTab({ addLog }: TabProps) {
 
         try {
             const auditResults = await performAudit(activeAudit, auditData);
-            setResults(auditResults);
+            setResults(auditResults as any);
             addLog(activeAudit + " Audit", auditData, 'Success');
         } catch (err: any) {
             const errorMessage = err.message || 'An unknown error occurred during audit.';
-            setError(errorMessage);
+            setError(errorMessage as any);
             addLog(activeAudit + " Audit", auditData, "Error: " + errorMessage);
         } finally {
             setIsLoading(false);
@@ -104,18 +102,18 @@ function AuditSupportTab({ addLog }: TabProps) {
 
     const generateRca = useCallback(async function() {
         if (!results) return;
-        const failedItems = results.filter(function(r) { return r.status === 'FAIL' || r.status === 'SUSPICIOUS'; });
+        const failedItems = (results as any).filter(function(r: any) { return r.status === 'FAIL' || r.status === 'SUSPICIOUS'; });
         if (failedItems.length === 0) return;
 
         setIsRcaLoading(true);
         setRca(null);
         try {
             const rcaSummary = await generateRcaSummary(failedItems);
-            setRca(rcaSummary);
+            setRca(rcaSummary as any);
             addLog('RCA Generation', { failedItems }, 'Success');
         } catch (err: any) {
             const errorMessage = "Error generating RCA: " + (err.message || String(err));
-            setRca(errorMessage);
+            setRca(errorMessage as any);
             addLog('RCA Generation', { failedItems }, "Error: " + errorMessage);
         } finally {
             setIsRcaLoading(false);
@@ -128,7 +126,7 @@ function AuditSupportTab({ addLog }: TabProps) {
         { id: AuditType.GmbBulk, label: '3. GMB Link Audit' },
     ];
 
-    const hasAuditFailures = results !== null && results.some(function(r) { return r.status === 'FAIL' || r.status === 'SUSPICIOUS'; });
+    const hasAuditFailures = results !== null && (results as any).some(function(r: any) { return r.status === 'FAIL' || r.status === 'SUSPICIOUS'; });
 
     return (
         <section id={"audit"}>
@@ -196,7 +194,7 @@ function AuditSupportTab({ addLog }: TabProps) {
                 <div className={"mt-8 pt-6 border-t"}>
                     <h3 className={"text-xl font-semibold mb-4 text-gray-800"}>{"Audit Result Summary"}</h3>
                     <div className={"space-y-3"}>
-                        {(results.length !== 0) ? results.map(function(item, index) {
+                        {((results as any).length !== 0) ? (results as any).map(function(item: any, index: number) {
                             return <AuditResultCard key={index} item={item}/>;
                         }) : (
                             <div className={"p-3 rounded-lg bg-green-50 border-green-500 border-l-4"}>{"\u2705 All checks passed."}</div>
