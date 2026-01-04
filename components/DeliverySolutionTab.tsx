@@ -66,7 +66,7 @@ function DeliverySolutionTab({ addLog }: TabProps) {
     const copyToClipboard = function() {
         if (aiScript) {
             navigator.clipboard.writeText(aiScript);
-            alert('Script copied to clipboard!');
+            alert('คัดลอกข้อความสำเร็จ!');
         }
     };
 
@@ -90,96 +90,156 @@ function DeliverySolutionTab({ addLog }: TabProps) {
     const canStepBack = (path.length !== 0 && path.length !== 1);
 
     return (
-        <section id={"delivery"}>
-            <h2 className={"text-2xl font-bold text-gray-800 mb-4"}>{"IHD Solution: เครื่องมือแก้ปัญหา"}</h2>
-            <p className={"text-gray-600 mb-4"}>{"เครื่องมือแก้ปัญหาด่วนเพื่อลดเวลาตัดสินใจและข้อผิดพลาดของทีม CS"}</p>
+        <section id={"delivery"} className={"animate-in fade-in duration-500"}>
+            <div className={"flex justify-between items-center mb-6"}>
+                <div>
+                    <h2 className={"text-2xl font-bold text-gray-800"}>{"IHD Solution: เครื่องมือแก้ปัญหา"}</h2>
+                    <p className={"text-sm text-gray-500"}>{"คู่มือตัดสินใจและแก้ปัญหาการจัดส่งอัจฉริยะ"}</p>
+                </div>
+                {!isPathEmpty && (
+                    <button onClick={resetFlow} className={"bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm font-semibold transition"}>
+                        {"เริ่มใหม่"}
+                    </button>
+                )}
+            </div>
 
             {isPathEmpty ? (
                 <div id={"delivery-step-1"}>
-                    <div className={"bg-orange-50 border-l-4 border-orange-500 p-4 mb-6 rounded-r-lg shadow-sm"}>
-                        <p className={"text-sm font-bold text-orange-700 mb-1"}>{"หมายเหตุ: ก่อนเริ่มดำเนินการด้านล่างทุกครั้ง"}</p>
-                        <p className={"text-sm text-orange-900"}>
-                            {"โปรดตรวจสอบว่าคนขับอยู่สถานะไหนโดยการสอบถามทางร้าน หรือเข้าไปตรวจสอบที่:"}
-                            <br />
-                            {IHD_ADMIN_LINK}
-                        </p>
+                    <div className={"bg-pink-600 text-white p-8 rounded-3xl mb-8 shadow-xl relative overflow-hidden"}>
+                        <div className={"relative z-10"}>
+                            <p className={"text-pink-100 text-xs font-bold uppercase tracking-wider mb-2 opacity-80"}>{"IHD Dashboard"}</p>
+                            <h3 className={"text-2xl font-bold mb-6 max-w-md leading-tight"}>{"เข้า Dashboard เพื่อตรวจสอบสถานะออเดอร์ที่ทางร้านต้องการ"}</h3>
+                            <div className={"inline-block"}>
+                                {IHD_ADMIN_LINK}
+                            </div>
+                        </div>
+                        <div className={"absolute top-0 right-0 p-4 opacity-10 text-9xl transform translate-x-4 -translate-y-4"}>{"🚚"}</div>
                     </div>
 
-                    <h3 className={"text-xl font-semibold mb-4 text-gray-800"}>{"ขั้นตอนที่ 1: เลือกประเภทปัญหาการจัดส่ง"}</h3>
-                    <div className={"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
+                    <h3 className={"text-lg font-bold mb-4 text-gray-700 flex items-center"}>
+                        <span className={"w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-3"}>{"1"}</span>
+                        {"เลือกประเภทปัญหาที่พบ"}
+                    </h3>
+                    <div className={"grid grid-cols-1 md:grid-cols-2 gap-4"}>
                         {Object.entries(deliveryFlow).map(function([key, value]: [string, any]) {
-                            const isManualCall = (key === 'manual-call');
-                            const btnClass = isManualCall 
-                                ? "bg-pink-100 text-pink-800 border-pink-300 hover:bg-pink-200" 
-                                : "bg-gray-100 text-gray-800 border-gray-300 hover:bg-indigo-600 hover:text-white";
-                                
+                            const isCallNewDriver = key === 'call-new-driver';
                             return (
                                 <button 
                                     key={key} 
                                     onClick={function() { handleOptionSelect(key); }} 
-                                    className={btnClass + " py-3 px-4 rounded-lg font-medium border w-full text-left transition-all duration-200 h-full flex flex-col justify-center"}
+                                    className={
+                                        isCallNewDriver
+                                        ? "group bg-pink-50 p-5 rounded-2xl border-2 border-pink-200 hover:border-pink-500 hover:shadow-xl transition-all duration-300 text-left flex items-center justify-between"
+                                        : "group bg-white p-5 rounded-2xl border-2 border-gray-100 hover:border-indigo-500 hover:shadow-xl transition-all duration-300 text-left flex items-center justify-between"
+                                    }
                                 >
-                                    {value.title}
+                                    <div className="flex flex-col text-left">
+                                        <span className={
+                                            isCallNewDriver 
+                                            ? "font-bold text-pink-700 group-hover:text-pink-800" 
+                                            : "font-bold text-gray-800 group-hover:text-indigo-600"
+                                        }>
+                                            {value.title}
+                                        </span>
+                                        {value.description && (
+                                            <span className={"text-[11px] font-medium mt-1 whitespace-pre-line " + (isCallNewDriver ? "text-pink-600" : "text-gray-500")}>
+                                                {value.description}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className={
+                                        isCallNewDriver 
+                                        ? "text-pink-300 group-hover:text-pink-500 transition-transform group-hover:translate-x-1" 
+                                        : "text-gray-300 group-hover:text-indigo-500 transition-transform group-hover:translate-x-1"
+                                    }>
+                                        {"→"}
+                                    </span>
                                 </button>
                             );
                         })}
                     </div>
                 </div>
             ) : (
-                <div id={"delivery-flow-container"} className={"mt-8 pt-6 border-t"}>
-                    <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{deliveryFlow[path[0]] ? deliveryFlow[path[0]].title : ''}</h3>
-                    <div className={"flex flex-col space-y-2 mb-4"}>
-                        <button onClick={resetFlow} className={"text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1"}>{"\u2190 กลับไปหน้าหลัก"}</button>
-                        {canStepBack && <button onClick={stepBack} className={"text-sm text-red-500 hover:text-red-700 font-semibold w-fit p-1 -ml-1"}>{"\u2190 กลับขั้นตอนก่อนหน้า"}</button>}
-                    </div>
-                    <div className={"text-sm text-gray-700 mb-4 font-semibold"}>
-                        {"เส้นทางดำเนินการ: "}
-                        <span className={"text-indigo-700"}>
+                <div id={"delivery-flow-container"} className={"space-y-6"}>
+                    <div className={"bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"}>
+                        <div className={"flex items-center text-xs font-bold text-indigo-500 uppercase tracking-widest mb-4"}>
                             {pathTitles.map(function(t, i) {
-                                const isFirst = (i === 0);
                                 return (
                                     <React.Fragment key={i}>
-                                        {!isFirst && <span className={"mx-1"}>{"\u2192"}</span>}
-                                        {t}
+                                        {i > 0 && <span className={"mx-2 text-gray-300"}>{"/"}</span>}
+                                        <span>{t}</span>
                                     </React.Fragment>
                                 );
                             })}
-                        </span>
-                    </div>
+                        </div>
 
-                    <div id={"dynamic-steps"} className={"space-y-4"}>
-                        {currentStepData && currentStepData.content && <div className={"mb-4"}>{currentStepData.content}</div>}
+                        {currentStepData && currentStepData.content && (
+                            <div className={"mb-6 animate-in slide-in-from-bottom-4 duration-300"}>
+                                {currentStepData.content}
+                            </div>
+                        )}
                         
                         {currentStepData && currentStepData.options && (
-                            <React.Fragment>
-                                <h4 className={"text-lg font-semibold text-gray-800 mb-3"}>{"เลือกการดำเนินการต่อไป:"}</h4>
-                                <div className={"space-y-3"}>
-                                    {Object.entries(currentStepData.options).map(function([key, value]: [string, any]) {
+                            <div className={"space-y-3"}>
+                                <h4 className={"text-sm font-bold text-gray-400 mb-2 uppercase"}>{"กรุณาเลือกทางออก:"}</h4>
+                                {Object.entries(currentStepData.options).map(function([key, value]: [string, any]) {
+                                    if (value.isDivider) {
                                         return (
-                                            <button key={key} onClick={function() { handleOptionSelect(key); }} className={"bg-indigo-100 text-indigo-700 py-3 px-4 rounded-lg font-medium border border-indigo-300 w-full text-left hover:bg-indigo-200"}>
-                                                {value.title}
-                                            </button>
+                                            <div key={key} className={"py-4 flex items-center"}>
+                                                <div className={"flex-grow border-t border-gray-100"}></div>
+                                                <span className={"px-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em]"}>
+                                                    {value.title}
+                                                </span>
+                                                <div className={"flex-grow border-t border-gray-100"}></div>
+                                            </div>
                                         );
-                                    })}
-                                </div>
-                            </React.Fragment>
+                                    }
+                                    return (
+                                        <button 
+                                            key={key} 
+                                            onClick={function() { handleOptionSelect(key); }} 
+                                            className={"w-full bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white p-4 rounded-xl font-bold text-left transition-all flex justify-between items-center"}
+                                        >
+                                            {value.title}
+                                            <span className={"opacity-50"}>{"→"}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {canStepBack && (
+                            <button onClick={stepBack} className={"mt-6 text-gray-400 hover:text-gray-600 text-xs font-bold transition flex items-center"}>
+                                <span className={"mr-1"}>{"←"}</span> {"ย้อนกลับ"}
+                            </button>
                         )}
                     </div>
                     
                     {currentStepData && currentStepData.isFinal && (
-                        <button onClick={handleGenerateScript} disabled={isGenerating} className={"mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md w-full disabled:bg-purple-400 flex justify-center items-center"}>
-                            {isGenerating && <LoadingSpinner />}
-                            {isGenerating ? "Generating..." : "✨ สร้างข้อความสื่อสารอัตโนมัติ"}
-                        </button>
-                    )}
-
-                    {aiScript && (
-                        <div className={"bg-blue-50 border border-dashed border-blue-300 p-4 mt-4 rounded-lg"}>
-                            <h4 className={"font-bold text-blue-800 mb-2"}>{"✨ สคริปต์การสื่อสารจาก AI (คัดลอกได้)"}</h4>
-                            <textarea value={aiScript} readOnly rows={5} className={"mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-gray-800 text-sm bg-white font-sans"}></textarea>
-                            <button onClick={copyToClipboard} className={"mt-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition duration-200"}>
-                                {"คัดลอกข้อความ"}
+                        <div className={"space-y-4 animate-in zoom-in-95 duration-500"}>
+                            <button 
+                                onClick={handleGenerateScript} 
+                                disabled={isGenerating} 
+                                className={"w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition shadow-lg flex justify-center items-center group"}
+                            >
+                                {isGenerating ? <LoadingSpinner /> : <span className={"mr-2 group-hover:scale-110 transition-transform"}>{"✨"}</span>}
+                                {isGenerating ? "กำลังสร้างข้อความ..." : "สร้างสคริปต์ตอบลูกค้าอัตโนมัติ"}
                             </button>
+
+                            {aiScript && (
+                                <div className={"bg-white border-2 border-indigo-100 rounded-2xl p-6 shadow-xl"}>
+                                    <div className={"flex justify-between items-center mb-3"}>
+                                        <h4 className={"font-bold text-gray-800"}>{"สคริปต์จาก AI:"}</h4>
+                                        <button onClick={copyToClipboard} className={"text-indigo-600 text-xs font-bold hover:underline"}>{"คัดลอก"}</button>
+                                    </div>
+                                    <textarea 
+                                        value={aiScript} 
+                                        readOnly 
+                                        rows={5} 
+                                        className={"w-full bg-gray-50 border-0 rounded-xl p-4 text-sm text-gray-700 focus:ring-0 font-sans leading-relaxed"}
+                                    ></textarea>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

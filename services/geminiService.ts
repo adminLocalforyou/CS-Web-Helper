@@ -2,9 +2,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult } from '../types';
 
 function getAIInstance() {
+    // ดึงค่าจาก Environment Variable ที่ตั้งไว้ใน Vercel
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-        throw new Error("API key is missing. Please ensure the API_KEY environment variable is set.");
+        throw new Error("API key is missing. Please add API_KEY to your Vercel Environment Variables.");
     }
     return new GoogleGenAI({ apiKey });
 }
@@ -17,9 +18,7 @@ function extractJsonFromString(text: string) {
             JSON.parse(potentialJson);
             return potentialJson;
         }
-    } catch (e) {
-        // Fallback
-    }
+    } catch (e) {}
     
     let clean = text.trim();
     if (clean.startsWith('```json')) { clean = clean.substring(7); }
@@ -33,7 +32,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
-        contents: `Analyze these URLs and return JSON with keyFindings (string), qualitativeAssessment (string with ---TH--- separator), and emailDraft (Thai string):
+        contents: `Analyze these URLs and return JSON with keyFindings, qualitativeAssessment, and emailDraft:
 - Website: ${websiteUrl}
 - GMB: ${gmbUrl}
 - Facebook: ${facebookUrl}`,
@@ -57,7 +56,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
 export async function performAudit(auditType: AuditType, auditData: any) {
     const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
-    let prompt = `Operations audit for ${auditType}. Data: ${JSON.stringify(auditData)}. Return an array of audit items with status (PASS/FAIL/SUSPICIOUS), title, and detail.`;
+    let prompt = `Operations audit for ${auditType}. Data: ${JSON.stringify(auditData)}.`;
 
     const response = await ai.models.generateContent({
         model,
@@ -99,25 +98,26 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
     let instructions = '';
     if (shopType === 'restaurant') {
         instructions = `You are an expert menu extraction AI. 
-CRITICAL RULES:
-1. OUTPUT MUST BE IN ENGLISH ONLY. Do not translate any text to Thai.
-2. Extract all food items, prices, and descriptions exactly as seen.
-Format:
+STRICT RULES:
+1. OUTPUT MUST BE 100% ENGLISH ONLY. Do not translate anything to Thai.
+2. Format each item as:
 [Item Name]
 Price : [Price]
 Description
 [Description text]
 ---`;
     } else {
-        instructions = `You are an expert service extraction AI for Massage and Wellness shops. 
-CRITICAL RULES:
-1. ALL OUTPUT MUST BE IN ENGLISH ONLY. Do not translate any text to Thai.
-2. GROUP SERVICES BY CATEGORY. 
-3. FORMAT: Whenever a new category starts, print "Category : [Category Name]". 
-4. List services under that category using format: "- [Service Name] [Duration] [Price]".
-5. If the category changes (e.g. from Remedial to Deep Tissue), print the new "Category : [Name]" header again.
+        instructions = `You are an expert service extraction AI for Massage & Wellness shops.
+STRICT RULES:
+1. OUTPUT MUST BE 100% ENGLISH ONLY. No Thai translations.
+2. GROUP SERVICES BY CATEGORY.
+3. FORMAT: Whenever you find a new category or when the service type changes, you MUST print:
+Category : [Category Name]
+4. List services under it as:
+- [Service Name] [Duration] [Price]
+5. When one category's services are finished and a new one starts, print the next "Category : [Name]" header immediately.
 
-Example Output Format:
+Example output:
 Category : THERAPEUTIC (Remedial)
 - Remedial Massage 60 mins $90
 - Remedial Massage 90 mins $130
@@ -128,7 +128,7 @@ Category : THERAPEUTIC (Deep Tissue)
     }
 
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: `${instructions}\n\nPlease extract all data from the attached image strictly following the rules above.` };
+    const textPart = { text: instructions + "\n\nExtract all data from the image following these rules strictly." };
     
     const response = await ai.models.generateContent({
         model,
@@ -141,7 +141,7 @@ export async function crossCheckMenu(webMenuUrl: string, imageBase64: string, mi
     const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: `Compare menu image with ${webMenuUrl}. Return JSON array of objects with itemName, status (PASS/FAIL/WARN), mismatchDetails, webData (price, description), imageData (price, description).` };
+    const textPart = { text: `Compare menu image with ${webMenuUrl}. Return JSON array of objects with itemName, status (PASS/FAIL/WARN), mismatchDetails.` };
 
     const response = await ai.models.generateContent({
         model,
@@ -155,9 +155,7 @@ export async function crossCheckMenu(webMenuUrl: string, imageBase64: string, mi
                     properties: {
                         itemName: { type: Type.STRING },
                         status: { type: Type.STRING },
-                        mismatchDetails: { type: Type.STRING },
-                        webData: { type: Type.OBJECT, properties: { price: { type: Type.STRING }, description: { type: Type.STRING } } },
-                        imageData: { type: Type.OBJECT, properties: { price: { type: Type.STRING }, description: { type: Type.STRING } } }
+                        mismatchDetails: { type: Type.STRING }
                     },
                     required: ["itemName", "status", "mismatchDetails"]
                 }

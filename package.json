@@ -4,7 +4,7 @@
   "description": "Customer Support Operations Helper",
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && esbuild index.tsx --bundle --minify --outfile=dist/bundle.js --loader:.tsx=tsx --define:process.env.NODE_ENV='\"production\"' --define:process.env.API_KEY=\"'$API_KEY'\" && cp index.html dist/index.html",
+    "build": "rm -rf dist && mkdir dist && esbuild index.tsx --bundle --minify --outfile=dist/bundle.js --loader:.tsx=tsx --define:process.env.NODE_ENV='\"production\"' --define:process.env.API_KEY=\"'\"$API_KEY\"'\" && cp index.html dist/index.html",
     "dev": "esbuild index.tsx --bundle --outfile=dist/bundle.js --loader:.tsx=tsx --servedir=dist"
   },
   "keywords": [],
