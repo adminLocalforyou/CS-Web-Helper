@@ -42,6 +42,16 @@ export interface MenuCheckResultItem {
     fileData: MenuDataItem | null;
 }
 
+export interface GroundingSource {
+    uri: string;
+    title: string;
+}
+
+export interface MenuCheckResult {
+    items: MenuCheckResultItem[];
+    sources: GroundingSource[];
+}
+
 export interface LogEntry {
     timestamp: Date;
     tool: string;
@@ -52,4 +62,9 @@ export interface LogEntry {
 
 export interface TabProps {
     addLog(tool: string, input: any, output: string): void;
+}
+
+export interface AIStudio {
+  hasSelectedApiKey(): Promise<boolean>;
+  openSelectKey(): Promise<void>;
 }
