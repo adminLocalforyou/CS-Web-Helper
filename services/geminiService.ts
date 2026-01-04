@@ -111,20 +111,16 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
 
     const filePart = { inlineData: { mimeType, data: fileBase64 } };
     
-    // คำสั่งที่เข้มงวดที่สุดเพื่อป้องกันการเดาราคา (Anti-Hallucination)
-    const systemPrompt = `ACT AS A FORENSIC AUDITOR. 
-    Compare the provided MENU IMAGE with the data from this SPECIFIC URL: ${webMenuUrl}
+    const systemPrompt = `ACT AS A HIGH-PRECISION FORENSIC AUDITOR.
+    OBJECTIVE: Compare the items in the UPLOADED IMAGE with the LIVE menu at ${webMenuUrl}.
 
-    STRICT RULES (RULES OF TRUTH):
-    1. NEVER INVENT OR GUESS PRICES. If a price is not clearly stated on the website at ${webMenuUrl}, return null for webData.price.
-    2. DATA INTEGRITY: Only report a FAIL if you find the same item name on the website but with a DIFFERENT price.
-    3. IF YOU CANNOT ACCESS THE DATA: Do not make up fake data. Report that you couldn't find the item.
-    4. CASE SENSITIVITY: "Pad Thai" and "PAD THAI" are the same item.
-    5. STRUCTURAL AUDIT: 
-       - If the Image groups items (e.g. "Prawn or Chicken $15") but the Web lists them as separate line items (e.g. "Prawn $15", "Chicken $15"), this is a PASS but note the structural difference.
-       - If prices differ in this structure, it's a FAIL.
+    STRICT RULES (CRITICAL):
+    1. SOURCE LIMITATION: Use ONLY data found at ${webMenuUrl}. 
+    2. ZERO HALLUCINATION: NEVER make up, guess, or assume a price. If an item or price is not explicitly visible at ${webMenuUrl}, set webData.price to null and report "Item not found on website".
+    3. PRICE COMPARISON: Compare numerical values exactly. If image is 15 and web is 15, status is PASS. If image is 15 and web is 16, status is FAIL.
+    4. NO EXTERNAL KNOWLEDGE: Do not use your internal knowledge of general restaurant prices. Only use what is on the screen/link.
 
-    OUTPUT: Return a JSON array of objects representing items extracted from the IMAGE.`;
+    Output a JSON array of items from the IMAGE and their comparison with the WEBSITE.`;
 
     try {
         const response = await ai.models.generateContent({
@@ -139,7 +135,7 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
                         type: Type.OBJECT,
                         properties: {
                             itemName: { type: Type.STRING },
-                            status: { type: Type.STRING, description: "PASS, FAIL, or WARN" },
+                            status: { type: Type.STRING },
                             mismatchDetails: { type: Type.STRING },
                             webData: {
                                 type: Type.OBJECT,
@@ -158,7 +154,6 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
 
         const items = JSON.parse(extractJsonFromString(response.text)) as MenuCheckResultItem[];
         
-        // Extract grounding sources to prove where data came from
         const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
         const sources: GroundingSource[] = chunks
             .filter((c: any) => c.web && (c.web.uri.includes(targetDomain) || c.web.uri === webMenuUrl))
@@ -168,14 +163,21 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
             }));
 
         if (sources.length === 0 && items.length > 0) {
-            sources.push({ uri: webMenuUrl, title: "Target Audit URL" });
+            sources.push({ uri: webMenuUrl, title: "Official Audit Source" });
         }
 
         return { items, sources };
     } catch (err: any) {
-        if (err.message && err.message.includes("403")) {
-            throw new Error("Audit Error: 403 Permission Denied. AI ไม่สามารถเข้าถึง URL นี้ได้ผ่าน Google Search แนะนำให้ใช้เครื่องมือ 'AI Scan Text' คัดลอกข้อความมาวางแทน");
+        const errorMsg = err.toString();
+        
+        if (errorMsg.includes("429") || errorMsg.includes("RESOURCE_EXHAUSTED")) {
+            throw new Error("⚠️ โควตาการเรียกใช้งานชั่วคราวเต็ม (Rate Limit): มีการเรียกใช้ AI และการค้นหาพร้อมกันมากเกินไปในระยะเวลาสั้นๆ โปรดรอประมาณ 1 นาทีแล้วกด 'Start' ใหม่อีกครั้ง หรือสลับไปใช้เมนู 'AI Scan Text' แทนเพื่อความรวดเร็ว");
         }
+        
+        if (errorMsg.includes("403")) {
+            throw new Error("⚠️ การเข้าถึงถูกปฏิเสธ (403): เว็บไซต์ปลายทางบล็อกการดึงข้อมูลอัตโนมัติ โปรดใช้การคัดลอกข้อความวางใน 'AI Scan Text' แทน");
+        }
+        
         throw err;
     }
 }
