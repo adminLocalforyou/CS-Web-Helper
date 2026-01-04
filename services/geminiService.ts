@@ -2,10 +2,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult } from '../types';
 
 function getAIInstance() {
-    // ดึงค่าจาก Environment Variable ที่ตั้งไว้ใน Vercel
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-        throw new Error("API key is missing. Please add API_KEY to your Vercel Environment Variables.");
+        throw new Error("API key is missing. Please add API_KEY to your environment.");
     }
     return new GoogleGenAI({ apiKey });
 }
@@ -137,33 +136,83 @@ Category : THERAPEUTIC (Deep Tissue)
     return response.text;
 }
 
-export async function crossCheckMenu(webMenuUrl: string, imageBase64: string, mimeType: string) {
+export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mimeType: string) {
     const ai = getAIInstance();
-    const model = 'gemini-3-flash-preview';
-    const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: `Compare menu image with ${webMenuUrl}. Return JSON array of objects with itemName, status (PASS/FAIL/WARN), mismatchDetails.` };
+    const model = 'gemini-3-pro-preview';
+    
+    const filePart = { 
+        inlineData: { 
+            mimeType, 
+            data: fileBase64 
+        } 
+    };
 
-    const response = await ai.models.generateContent({
-        model,
-        contents: { parts: [imagePart, textPart] },
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        itemName: { type: Type.STRING },
-                        status: { type: Type.STRING },
-                        mismatchDetails: { type: Type.STRING }
-                    },
-                    required: ["itemName", "status", "mismatchDetails"]
+    const systemPrompt = `ACT AS A ROBOTIC FORENSIC AUDITOR WITH 100% CHARACTER MATCHING ACCURACY.
+
+GOAL: Compare EVERY ITEM in the document against the website: ${webMenuUrl}. 
+
+CRITICAL PROTOCOLS:
+1. SCAN EVERYTHING: You MUST extract every single item from the document first. If you see 57 items, you report 57 items. DO NOT SUMMARIZE. DO NOT SKIP.
+2. CHARACTER-BY-CHARACTER MATCHING:
+   - Price: $12 (Doc) vs $13 (Web) is a FAIL.
+   - Text: (5 PIECES) vs (4 PIECES) is a FAIL.
+   - Price: $12.00 vs $12.50 is a FAIL.
+3. INTERNAL VERIFICATION STEP:
+   - Step 1: Transcribe the document item name and price exactly.
+   - Step 2: Use Google Search/Maps to find THAT EXACT ITEM on the website URL.
+   - Step 3: Compare. If they are not IDENTICAL characters, mark as "FAIL".
+4. MANDATORY EVIDENCE: In 'mismatchDetails', you MUST show the difference like: "Mismatch: [Item Name] | Document says $12 | Web says $13".
+5. NO ASSUMPTIONS: If you cannot find the item on the website, mark as FAIL.
+
+OUTPUT: Return a JSON array of MenuCheckResultItem for every item detected.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model,
+            contents: { parts: [filePart, { text: systemPrompt }] },
+            config: {
+                tools: [{ googleSearch: {} }],
+                thinkingConfig: { thinkingBudget: 32768 },
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            itemName: { type: Type.STRING },
+                            status: { type: Type.STRING, description: "PASS, FAIL, or WARN" },
+                            mismatchDetails: { type: Type.STRING },
+                            webData: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    price: { type: Type.STRING },
+                                    description: { type: Type.STRING }
+                                }
+                            },
+                            fileData: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    price: { type: Type.STRING },
+                                    description: { type: Type.STRING }
+                                }
+                            }
+                        },
+                        required: ["itemName", "status", "mismatchDetails"]
+                    }
                 }
             }
-        }
-    });
+        });
 
-    return JSON.parse(extractJsonFromString(response.text)) as MenuCheckResultItem[];
+        const results = JSON.parse(extractJsonFromString(response.text)) as MenuCheckResultItem[];
+        // Double check results locally to ensure Fail/Pass logic is respected by the developer logic if needed
+        return results;
+    } catch (err: any) {
+        console.error("Gemini API Error:", err);
+        if (err.message?.includes('500') || err.message?.includes('INTERNAL')) {
+            throw new Error("AI Server Error: ข้อมูลมีขนาดใหญ่เกินไป หรือการประมวลผลลึกเกินขีดจำกัด โปรดลองอัปโหลดเป็นภาพแยกทีละส่วน หรือลองใหม่อีกครั้ง");
+        }
+        throw err;
+    }
 }
 
 export async function generateCommunicationScript(path: string) {

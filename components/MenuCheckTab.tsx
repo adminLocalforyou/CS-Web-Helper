@@ -21,34 +21,40 @@ function ResultItemCard({ item }: ResultItemCardProps) {
         <div className={"p-4 rounded-lg shadow-md border-l-4 " + styles.card}>
             <div className={"flex justify-between items-start"}>
                 <h4 className={"text-lg font-bold text-gray-800"}>{item.itemName}</h4>
-                <span className={"px-3 py-1 text-xs font-bold text-white rounded-full " + styles.badge}>
-                    {item.status}
-                </span>
+                <div className={"flex items-center space-x-2"}>
+                   {!isPass && <span className="animate-pulse text-red-600 text-xs font-bold">{"⚠️ DISCREPANCY FOUND"}</span>}
+                   <span className={"px-3 py-1 text-xs font-bold text-white rounded-full " + styles.badge}>
+                        {item.status}
+                    </span>
+                </div>
             </div>
             {!isPass && (
                 <React.Fragment>
-                    <p className={"mt-2 text-sm font-semibold " + (styles.text || '')}>{item.mismatchDetails}</p>
+                    <div className={"mt-2 p-3 bg-white/50 rounded border border-red-200 shadow-sm " + (styles.text || '')}>
+                        <p className="text-xs font-bold text-red-800 mb-1">{"DETAILED DIFFERENCE:"}</p>
+                        <p className="text-sm font-bold bg-white p-1 rounded border inline-block border-red-100">{item.mismatchDetails}</p>
+                    </div>
                     <div className={"mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-3"}>
                         <div>
-                            <p className={"text-sm font-semibold text-gray-600 mb-1"}>{"Website Data"}</p>
+                            <p className={"text-xs font-bold text-gray-500 uppercase mb-1"}>{"Website (Live)"}</p>
                             {item.webData ? (
-                                <div className={"text-xs text-gray-700 space-y-1"}>
-                                    <p><span className={"font-medium"}>{"Price:"}</span> {item.webData.price || 'N/A'}</p>
-                                    <p><span className={"font-medium"}>{"Description:"}</span> {item.webData.description || 'N/A'}</p>
+                                <div className={"text-xs text-gray-700 space-y-1 p-2 bg-white rounded border border-gray-100"}>
+                                    <p><span className={"font-bold text-red-600"}>{"Price:"}</span> {item.webData.price || 'N/A'}</p>
+                                    <p><span className={"font-medium text-gray-500"}>{"Info:"}</span> {item.webData.description || 'N/A'}</p>
                                 </div>
                             ) : (
-                                <p className={"text-xs text-gray-500 italic"}>{"Item not found on website."}</p>
+                                <p className={"text-xs text-red-500 italic p-2 bg-red-50 rounded border border-red-100"}>{"Item missing on URL"}</p>
                             )}
                         </div>
                         <div>
-                            <p className={"text-sm font-semibold text-gray-600 mb-1"}>{"Image Data"}</p>
-                            {item.imageData ? (
-                                <div className={"text-xs text-gray-700 space-y-1"}>
-                                    <p><span className={"font-medium"}>{"Price:"}</span> {item.imageData.price || 'N/A'}</p>
-                                    <p><span className={"font-medium"}>{"Description:"}</span> {item.imageData.description || 'N/A'}</p>
+                            <p className={"text-xs font-bold text-gray-500 uppercase mb-1"}>{"Document (Scan)"}</p>
+                            {item.fileData ? (
+                                <div className={"text-xs text-gray-700 space-y-1 p-2 bg-white rounded border border-gray-100"}>
+                                    <p><span className={"font-bold text-indigo-600"}>{"Price:"}</span> {item.fileData.price || 'N/A'}</p>
+                                    <p><span className={"font-medium text-gray-500"}>{"Info:"}</span> {item.fileData.description || 'N/A'}</p>
                                 </div>
                             ) : (
-                                <p className={"text-xs text-gray-500 italic"}>{"Item not found in image."}</p>
+                                <p className={"text-xs text-gray-500 italic p-2 bg-gray-50 rounded border border-gray-200"}>{"Missing in file"}</p>
                             )}
                         </div>
                     </div>
@@ -61,34 +67,33 @@ function ResultItemCard({ item }: ResultItemCardProps) {
 function MenuCheckTab({ addLog }: TabProps) {
     const [webMenuUrl, setWebMenuUrl] = useState('');
     const [file, setFile] = useState(null);
-    const [imageBase64, setImageBase64] = useState(null);
+    const [fileBase64, setFileBase64] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [results, setResults] = useState(null);
 
     const handleFileChange = function(e: React.ChangeEvent<HTMLInputElement>) {
         const selectedFile = e.target.files ? e.target.files[0] : null;
-        if (selectedFile && selectedFile.type.startsWith('image/')) {
+        if (selectedFile) {
             setFile(selectedFile as any);
             const reader = new FileReader();
             reader.onloadend = function() {
                 const res = String(reader.result);
                 const parts = res.split(',');
-                if (parts.length !== 1) {
-                    setImageBase64(parts[1] as any);
+                if (parts.length > 1) {
+                    setFileBase64(parts[1] as any);
                 }
             };
             reader.readAsDataURL(selectedFile);
         } else {
             setFile(null);
-            setImageBase64(null);
-            alert('Please select a valid image file (.jpg, .png)');
+            setFileBase64(null);
         }
     };
 
     const runCrossCheck = useCallback(async function() {
-        if (!webMenuUrl || !imageBase64 || !file) {
-            setError('Please provide a URL and upload a menu image.' as any);
+        if (!webMenuUrl || !fileBase64 || !file) {
+            setError('Please provide a URL and upload a menu file.' as any);
             return;
         }
         setIsLoading(true);
@@ -96,61 +101,103 @@ function MenuCheckTab({ addLog }: TabProps) {
         setResults(null);
         try {
             const castFile = file as any;
-            const checkResult = await crossCheckMenu(webMenuUrl, imageBase64, castFile.type);
+            const checkResult = await crossCheckMenu(webMenuUrl, fileBase64, castFile.type);
             setResults(checkResult as any);
             addLog('Menu Cross-Check', { webMenuUrl, fileName: castFile.name }, 'Success');
         } catch (err: any) {
-            const errorMessage = err.message || 'An unknown error occurred.';
-            setError(errorMessage as any);
-            addLog('Menu Cross-Check', { webMenuUrl, fileName: (file as any).name }, "Error: " + errorMessage);
+            setError(err.message as any);
+            addLog('Menu Cross-Check', { webMenuUrl, fileName: (file as any).name }, "Error: " + err.message);
         } finally {
             setIsLoading(false);
         }
-    }, [webMenuUrl, imageBase64, file, addLog]);
+    }, [webMenuUrl, fileBase64, file, addLog]);
+
+    const getFileIcon = () => {
+        if (!file) return "📄";
+        const type = (file as any).type;
+        if (type.startsWith('image/')) return "🖼️";
+        if (type === 'application/pdf') return "📕";
+        return "📄";
+    };
+
+    const totalItems = results ? (results as any).length : 0;
+    const failItems = results ? (results as any).filter((r: any) => r.status === 'FAIL' || r.status === 'WARN').length : 0;
 
     return (
         <section id={"menu"}>
-            <h2 className={"text-2xl font-bold text-gray-800 mb-4"}>{"Menu Cross-Check"}</h2>
-            <p className={"text-gray-600 mb-6"}>{"AI tool to cross-reference menu data between the website link and a given image file data to check for human errors (Description, Pricing)."}</p>
+            <div className="flex justify-between items-start mb-4">
+                <div>
+                    <h2 className={"text-2xl font-bold text-gray-800"}>{"Menu Forensic Audit (Strict Mode 3.2)"}</h2>
+                    <p className={"text-gray-600 mt-1"}>{"AI is instructed to verify every single item character-by-character."}</p>
+                </div>
+            </div>
+
+            <div className={"bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-6 rounded-r-xl shadow-sm"}>
+                <p className={"text-sm text-indigo-800 font-semibold"}>{"🛡️ Strict Comparison Protocol Active:"}</p>
+                <ul className="text-xs text-indigo-700 mt-2 list-disc list-inside space-y-1 font-medium">
+                    <li>{"Sequential Check: Document is scanned from start to finish without skipping."}</li>
+                    <li>{"Zero Tolerance: Even a $0.50 or 1-character difference is flagged as FAIL."}</li>
+                    <li>{"Deep Extraction: AI transcribes all items first before looking at the web."}</li>
+                </ul>
+            </div>
 
             <div className={"space-y-4 mb-6"}>
                 <div>
                     <label htmlFor={"web-menu-url"} className={"block text-sm font-medium text-gray-700"}>{"Website Menu Link"}</label>
-                    <input type={"url"} id={"web-menu-url"} value={webMenuUrl} onChange={function(e) { setWebMenuUrl(e.target.value); }} placeholder={"e.g., https://www.store.com/menu"} className={"mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"} />
+                    <input type={"url"} id={"web-menu-url"} value={webMenuUrl} onChange={function(e) { setWebMenuUrl(e.target.value); }} placeholder={"Paste URL here..."} className={"mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 border focus:ring-indigo-500 focus:border-indigo-500"} />
                 </div>
                 <div>
-                    <label className={"block text-sm font-medium text-gray-700"}>{"Upload Menu Image File for Cross-Check"}</label>
+                    <label className={"block text-sm font-medium text-gray-700"}>{"Menu Document (Will be scanned in full)"}</label>
                     <div className={"flex items-center space-x-2 mt-1"}>
-                        <label className={"bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-semibold py-2 px-4 rounded-lg transition duration-200 flex-grow text-center cursor-pointer"}>
-                            {"\uD83D\uDDBC\uFE0F Select Menu Image (.jpg, .png)"}
-                            <input type={"file"} onChange={handleFileChange} className={"hidden"} accept={"image/png, image/jpeg"} />
+                        <label className={"bg-white hover:bg-indigo-50 text-indigo-600 font-semibold py-4 px-4 rounded-xl transition duration-200 flex-grow text-center cursor-pointer border-2 border-indigo-200 border-dashed"}>
+                            <span className="mr-2">{getFileIcon()}</span>
+                            {"Upload Menu for Full Audit"}
+                            <input type={"file"} onChange={handleFileChange} className={"hidden"} accept={"image/*,application/pdf"} />
                         </label>
-                        <span className={"text-xs text-gray-500 truncate"}>{(file as any)?.name || 'No file selected.'}</span>
+                        <div className={"text-xs text-gray-500 max-w-[150px] truncate bg-gray-100 p-2 rounded"}>{(file as any)?.name || 'No file selected.'}</div>
                     </div>
                 </div>
             </div>
 
-            <button onClick={runCrossCheck} disabled={isLoading || !webMenuUrl || !file} className={"w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:bg-indigo-400 disabled:cursor-not-allowed flex justify-center items-center"}>
+            <button onClick={runCrossCheck} disabled={isLoading || !webMenuUrl || !file} className={"w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-xl transition duration-200 shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"}>
                 {isLoading && <LoadingSpinner />}
-                {isLoading ? 'Checking...' : 'Start Menu Cross-Check'}
+                {isLoading ? 'AI is scanning all items in the document... This may take a minute' : 'Start Exhaustive Audit'}
             </button>
 
-            {error && <div className={"mt-4 text-center text-red-600 bg-red-100 p-3 rounded-md"}>{error}</div>}
+            {error && (
+                <div className={"mt-4 p-4 bg-red-100 text-red-700 rounded-xl border border-red-200 shadow-sm"}>
+                    <p className="font-bold">{"⚠️ Audit Error"}</p>
+                    <p className="text-sm mt-1">{error}</p>
+                </div>
+            )}
 
             {isLoading && (
-                <div className={"mt-8 border-t pt-6 text-center"}>
-                    <div className={"flex justify-center items-center"}>
-                      <LoadingSpinner />
-                      <p className={"ml-2 text-gray-600"}>{"AI is analyzing the menu and website..."}</p>
-                    </div>
+                <div className={"mt-8 border-t pt-6 text-center animate-pulse"}>
+                    <p className={"text-indigo-600 font-bold"}>{"Performing Item-by-Item Forensic Analysis..."}</p>
+                    <p className={"text-gray-500 text-xs mt-2"}>{"Transcribing document data and verifying each price against live web source."}</p>
                 </div>
             )}
 
             {results && (
                 <div className={"mt-8 border-t pt-6"}>
-                    <h3 className={"text-xl font-semibold mb-4 text-gray-800"}>{"AI Cross-Check Report"}</h3>
+                    <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
+                        <h3 className={"text-xl font-semibold text-gray-800"}>{"Full Audit Log"}</h3>
+                        <div className="flex space-x-2">
+                            <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                                {totalItems} {"Items Detected"}
+                            </span>
+                            <span className={`${failItems > 0 ? 'bg-red-500' : 'bg-green-500'} text-white px-3 py-1 rounded-full text-xs font-bold shadow-md`}>
+                                {failItems} {"Discrepancies"}
+                            </span>
+                        </div>
+                    </div>
+
                     <div className={"space-y-4"}>
-                        {(results as any).map(function(item: any, index: number) {
+                        {(results as any).length === 0 ? (
+                            <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl text-center font-medium shadow-sm">
+                                {"✅ All detected items match the website."}
+                            </div>
+                        ) : (results as any).map(function(item: any, index: number) {
                             return <ResultItemCard key={index} item={item} />;
                         })}
                     </div>

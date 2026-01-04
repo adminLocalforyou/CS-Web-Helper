@@ -39,7 +39,7 @@ export interface MenuCheckResultItem {
     status: 'PASS' | 'FAIL' | 'WARN';
     mismatchDetails: string;
     webData: MenuDataItem | null;
-    imageData: MenuDataItem | null;
+    fileData: MenuDataItem | null;
 }
 
 export interface LogEntry {
