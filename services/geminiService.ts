@@ -3,8 +3,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCheckResult, GroundingSource } from '../types';
 
 function getAIInstance() {
-    const apiKey = process.env.API_KEY;
+    // เข้าถึง API_KEY อย่างปลอดภัย
+    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
     if (!apiKey) {
+        console.error("Critical: API key is missing from environment.");
         throw new Error("API key is missing.");
     }
     return new GoogleGenAI({ apiKey });
@@ -97,33 +99,33 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
     if (shopType === 'massage') {
         instructions = `ACT AS A HIGH-PRECISION TEXT EXTRACTOR.
         1. EXTRACT MASSAGE SERVICES FROM IMAGE. 
-        2. FORMAT RULES:
+        2. MAIN FORMAT RULES:
            - Category : [Category Name]
            - Service : [Service Name]
            - [Service Name] - [Duration][Price]
         3. NO PARENTHESES. NO BRACKETS. NO BOLDING (**).
-        4. OTHERS SECTION: Any text that is NOT a service or category (e.g., Shop Name, Address, Opening Hours, Phone, T&C) MUST be listed at the VERY END under a header:
+        4. OTHERS SECTION: Any text found that is NOT a service or category (e.g. Shop Name, Address, Hours, Phone) MUST be placed at the VERY BOTTOM under the header:
            Others
-           [Text found]
-        5. DO NOT include any introductory or concluding remarks. Just the data.`;
+           [Text]
+        5. Provide clean text only.`;
     } else {
         instructions = `ACT AS A HIGH-PRECISION TEXT EXTRACTOR.
         1. EXTRACT RESTAURANT MENU ITEMS FROM IMAGE.
-        2. FORMAT RULES:
-           - Item : [Item Name]
-           - Price : [Price]
-           - Description : [Description]
-           - Use --- as separator after each item.
+        2. MAIN FORMAT RULES:
+           Item : [Item Name]
+           Price : [Price]
+           Description : [Description]
+           ---
         3. NO PARENTHESES. NO BRACKETS. NO BOLDING (**).
-        4. If no description, write "Description : -"
-        5. OTHERS SECTION: Any text that is NOT a menu item (e.g., Store Info, Location, Footer notes, Trading hours) MUST be listed at the VERY END under a header:
+        4. If no description, use "Description : -"
+        5. OTHERS SECTION: Any text found that is NOT a menu item (e.g. Restaurant Name, Address, Website, T&C) MUST be placed at the VERY BOTTOM under the header:
            Others
-           [Text found]
-        6. DO NOT include any introductory or concluding remarks. Just the data.`;
+           [Text]
+        6. Provide clean text only.`;
     }
 
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: instructions + "\n\nExtract all data from the image following the rules above strictly." };
+    const textPart = { text: instructions + "\n\nPlease extract the data from the provided image accurately." };
     const response = await ai.models.generateContent({ model, contents: { parts: [imagePart, textPart] } });
     return response.text;
 }
@@ -141,15 +143,11 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
     const filePart = { inlineData: { mimeType, data: fileBase64 } };
     
     const systemPrompt = `ACT AS A HIGH-PRECISION FORENSIC AUDITOR.
-    OBJECTIVE: Compare the items in the UPLOADED IMAGE with the LIVE menu at ${webMenuUrl}.
-
-    STRICT RULES (CRITICAL):
-    1. SOURCE LIMITATION: Use ONLY data found at ${webMenuUrl}. 
-    2. ZERO HALLUCINATION: NEVER make up, guess, or assume a price. If an item or price is not explicitly visible at ${webMenuUrl}, set webData.price to null and report "Item not found on website".
-    3. PRICE COMPARISON: Compare numerical values exactly. If image is 15 and web is 15, status is PASS. If image is 15 and web is 16, status is FAIL.
-    4. NO EXTERNAL KNOWLEDGE: Do not use your internal knowledge of general restaurant prices. Only use what is on the screen/link.
-
-    Output a JSON array of items from the IMAGE and their comparison with the WEBSITE.`;
+    Compare the items in the UPLOADED IMAGE with the LIVE menu at ${webMenuUrl}.
+    Rules:
+    - Source ONLY from ${webMenuUrl}
+    - No Hallucination
+    - Output exact JSON array.`;
 
     try {
         const response = await ai.models.generateContent({
@@ -182,7 +180,6 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
         });
 
         const items = JSON.parse(extractJsonFromString(response.text)) as MenuCheckResultItem[];
-        
         const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
         const sources: GroundingSource[] = chunks
             .filter((c: any) => c.web && (c.web.uri.includes(targetDomain) || c.web.uri === webMenuUrl))
@@ -197,16 +194,6 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
 
         return { items, sources };
     } catch (err: any) {
-        const errorMsg = err.toString();
-        
-        if (errorMsg.includes("429") || errorMsg.includes("RESOURCE_EXHAUSTED")) {
-            throw new Error("⚠️ โควตาการเรียกใช้งานชั่วคราวเต็ม (Rate Limit): มีการเรียกใช้ AI และการค้นหาพร้อมกันมากเกินไปในระยะเวลาสั้นๆ โปรดรอประมาณ 1 นาทีแล้วกด 'Start' ใหม่อีกครั้ง หรือสลับไปใช้เมนู 'AI Scan Text' แทนเพื่อความรวดเร็ว");
-        }
-        
-        if (errorMsg.includes("403")) {
-            throw new Error("⚠️ การเข้าถึงถูกปฏิเสธ (403): เว็บไซต์ปลายทางบล็อกการดึงข้อมูลอัตโนมัติ โปรดใช้การคัดลอกข้อความวางใน 'AI Scan Text' แทน");
-        }
-        
         throw err;
     }
 }
