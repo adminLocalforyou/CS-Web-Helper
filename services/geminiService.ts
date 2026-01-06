@@ -3,11 +3,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCheckResult, GroundingSource } from '../types';
 
 function getAIInstance() {
-    // เข้าถึง API_KEY อย่างปลอดภัย
+    // ป้องกันหน้าขาวโดยการเช็ค API_KEY อย่างละเอียด
     const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
     if (!apiKey) {
-        console.error("Critical: API key is missing from environment.");
-        throw new Error("API key is missing.");
+        throw new Error("API Key is not configured. Please check your environment variables.");
     }
     return new GoogleGenAI({ apiKey });
 }
@@ -97,35 +96,59 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
     
     let instructions = "";
     if (shopType === 'massage') {
-        instructions = `ACT AS A HIGH-PRECISION TEXT EXTRACTOR.
-        1. EXTRACT MASSAGE SERVICES FROM IMAGE. 
-        2. MAIN FORMAT RULES:
-           - Category : [Category Name]
-           - Service : [Service Name]
-           - [Service Name] - [Duration][Price]
-        3. NO PARENTHESES. NO BRACKETS. NO BOLDING (**).
-        4. OTHERS SECTION: Any text found that is NOT a service or category (e.g. Shop Name, Address, Hours, Phone) MUST be placed at the VERY BOTTOM under the header:
-           Others
-           [Text]
-        5. Provide clean text only.`;
+        instructions = `ACT AS A TEXT EXTRACTOR. 
+        EXTRACT MASSAGE SERVICES.
+        
+        FORMAT RULES (STRICT):
+        1. Category : [Category Name]
+        2. Service : [Service Name]
+        3. [Service Name] - [Duration][Price]
+        4. NO PARENTHESES ().
+        5. NO BRACKETS [].
+        6. NO BOLDING (**).
+        7. OTHERS SECTION: Put any other text (Address, Phone, Shop Name) at the VERY END under a header "Others".
+        
+        Example:
+        Category : Thai Massage
+        Service : Traditional Thai
+        Traditional Thai - 60mins $70
+        Traditional Thai - 90mins $100
+        
+        Others
+        Open Daily 10am-9pm
+        Phone 0412345678`;
     } else {
-        instructions = `ACT AS A HIGH-PRECISION TEXT EXTRACTOR.
-        1. EXTRACT RESTAURANT MENU ITEMS FROM IMAGE.
-        2. MAIN FORMAT RULES:
-           Item : [Item Name]
-           Price : [Price]
-           Description : [Description]
-           ---
-        3. NO PARENTHESES. NO BRACKETS. NO BOLDING (**).
-        4. If no description, use "Description : -"
-        5. OTHERS SECTION: Any text found that is NOT a menu item (e.g. Restaurant Name, Address, Website, T&C) MUST be placed at the VERY BOTTOM under the header:
-           Others
-           [Text]
-        6. Provide clean text only.`;
+        instructions = `ACT AS A TEXT EXTRACTOR.
+        EXTRACT RESTAURANT MENU ITEMS.
+        
+        FORMAT RULES (STRICT):
+        1. Item : [Item Name]
+        2. Price : [Price]
+        3. Description : [Description]
+        4. Use "---" to separate each item.
+        5. NO PARENTHESES ().
+        6. NO BRACKETS [].
+        7. NO BOLDING (**).
+        8. If no description, use "Description : -"
+        9. OTHERS SECTION: Put any other text (Address, Phone, Trading Hours, Shop Name) at the VERY END under a header "Others".
+        
+        Example:
+        Item : Pad Thai
+        Price : $18.50
+        Description : Stir-fried noodles with egg and tofu.
+        ---
+        Item : Spring Rolls
+        Price : $8.00
+        Description : -
+        ---
+        
+        Others
+        Located at Level 1, Sydney Mall
+        Tel: 02 9876 5432`;
     }
 
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: instructions + "\n\nPlease extract the data from the provided image accurately." };
+    const textPart = { text: instructions + "\n\nExtract text from the attached image strictly following the format rules above." };
     const response = await ai.models.generateContent({ model, contents: { parts: [imagePart, textPart] } });
     return response.text;
 }
@@ -141,13 +164,7 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
     } catch (e) {}
 
     const filePart = { inlineData: { mimeType, data: fileBase64 } };
-    
-    const systemPrompt = `ACT AS A HIGH-PRECISION FORENSIC AUDITOR.
-    Compare the items in the UPLOADED IMAGE with the LIVE menu at ${webMenuUrl}.
-    Rules:
-    - Source ONLY from ${webMenuUrl}
-    - No Hallucination
-    - Output exact JSON array.`;
+    const systemPrompt = `ACT AS A FORENSIC AUDITOR. Compare IMAGE items with LIVE menu at ${webMenuUrl}. No hallucination.`;
 
     try {
         const response = await ai.models.generateContent({
