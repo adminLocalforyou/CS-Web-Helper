@@ -63,8 +63,3 @@ export interface LogEntry {
 export interface TabProps {
     addLog(tool: string, input: any, output: string): void;
 }
-
-export interface AIStudio {
-  hasSelectedApiKey(): Promise<boolean>;
-  openSelectKey(): Promise<void>;
-}

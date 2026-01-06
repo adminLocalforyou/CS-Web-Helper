@@ -2,9 +2,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCheckResult, GroundingSource } from '../types';
 
-/**
- * ฟังก์ชันช่วยในการสกัด JSON จากข้อความที่ AI ส่งกลับมา
- */
 function extractJsonFromString(text: string) {
     try {
         const match = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
@@ -24,7 +21,7 @@ function extractJsonFromString(text: string) {
 
 export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, facebookUrl: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const model = 'gemini-3-flash-preview';
+    const model = 'gemini-3-pro-preview';
     const response = await ai.models.generateContent({
         model,
         contents: `Analyze these URLs and return JSON with keyFindings, qualitativeAssessment, and emailDraft:
@@ -32,6 +29,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
 - GMB: ${gmbUrl}
 - Facebook: ${facebookUrl}`,
         config: {
+            tools: [{ googleSearch: {} }],
             responseMimeType: "application/json",
             responseSchema: {
                 type: Type.OBJECT,
@@ -50,7 +48,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
 
 export async function performAudit(auditType: AuditType, auditData: any) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const model = 'gemini-3-flash-preview';
+    const model = 'gemini-3-pro-preview';
     let prompt = `Operations audit for ${auditType}. Data: ${JSON.stringify(auditData)}.`;
 
     const response = await ai.models.generateContent({
@@ -78,8 +76,8 @@ export async function performAudit(auditType: AuditType, auditData: any) {
 
 export async function generateRcaSummary(failedItems: AuditResultItem[]) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const model = 'gemini-3-flash-preview';
-    const prompt = `Perform a Root Cause Analysis (RCA) summary for the following audit failures: ${JSON.stringify(failedItems)}.`;
+    const model = 'gemini-3-pro-preview';
+    const prompt = `Perform a Root Cause Analysis (RCA) summary: ${JSON.stringify(failedItems)}.`;
     const response = await ai.models.generateContent({ model, contents: prompt });
     return response.text;
 }
@@ -96,21 +94,19 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         1. Category : [Category Name]
         2. Service : [Service Name]
         3. [Service Name] - [Duration] [Price]
-        4. NO PARENTHESES AT ALL. (Example: Use 60mins instead of (60mins))
+        4. NO PARENTHESES AT ALL. (e.g., use 60mins instead of (60mins))
         5. NO BRACKETS AT ALL.
-        6. NO MARKDOWN BOLDING AT ALL. (Example: Do NOT use ** anywhere)
-        7. OTHERS SECTION: Any text that is NOT a service or category (e.g., Shop Name, Address, Phone, Hours) MUST be placed under a single header "Others" at the VERY BOTTOM of the response.
+        6. NO MARKDOWN BOLDING AT ALL. (e.g., Do NOT use ** anywhere)
+        7. OTHERS SECTION: Any text that is NOT a service or category MUST be placed under a header "Others" at the VERY BOTTOM.
         
-        Example Output Format:
+        Example:
         Category : Thai Massage
         Service : Traditional Thai
         Traditional Thai - 60mins $70
-        Traditional Thai - 90mins $100
         
         Others
         Sunshine Spa
-        Address: 123 Street
-        Phone: 021234567`;
+        Address: 123 Street`;
     } else {
         instructions = `ACT AS A TEXT EXTRACTOR FOR RESTAURANT MENUS.
         
@@ -118,26 +114,20 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         1. Item : [Item Name]
         2. Price : [Price]
         3. Description : [Description]
-        4. Use "---" as a separator ONLY between menu items.
-        5. NO PARENTHESES AT ALL. (Example: Use Small instead of (Small))
+        4. Use "---" as a separator ONLY between items.
+        5. NO PARENTHESES AT ALL. (e.g., use Small instead of (Small))
         6. NO BRACKETS AT ALL.
-        7. NO MARKDOWN BOLDING AT ALL. (Example: Do NOT use ** anywhere)
-        8. If no description, use "Description : -"
-        9. OTHERS SECTION: Any text that is NOT a menu item (e.g., Restaurant Name, Address, Website, T&C) MUST be placed under a single header "Others" at the VERY BOTTOM of the response.
+        7. NO MARKDOWN BOLDING AT ALL. (e.g., Do NOT use ** anywhere)
+        8. OTHERS SECTION: Any text that is NOT a menu item MUST be placed under a header "Others" at the VERY BOTTOM.
         
-        Example Output Format:
+        Example:
         Item : Pad Thai
         Price : $18.50
-        Description : Stir-fried rice noodles with egg.
-        ---
-        Item : Spring Rolls
-        Price : $8.00
-        Description : -
+        Description : Stir-fried rice noodles.
         ---
         
         Others
         Baan Thai Restaurant
-        10% Surcharge on Sunday
         Open daily 11am-10pm`;
     }
 
@@ -146,7 +136,7 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         contents: { 
             parts: [
                 { inlineData: { mimeType, data: imageBase64 } },
-                { text: instructions + "\n\nPlease extract all text from this image according to the strict rules above." }
+                { text: instructions + "\n\nPlease extract text according to rules." }
             ] 
         } 
     });
@@ -155,7 +145,7 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
 
 export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mimeType: string): Promise<MenuCheckResult> {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const model = 'gemini-3-flash-preview';
+    const model = 'gemini-3-pro-preview';
     
     let targetDomain = "";
     try {
@@ -163,56 +153,41 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
         targetDomain = urlObj.hostname.replace('www.', '');
     } catch (e) {}
 
-    const filePart = { inlineData: { mimeType, data: fileBase64 } };
-    const systemPrompt = `Compare menu items in IMAGE with LIVE menu at ${webMenuUrl}. Output JSON.`;
-
-    try {
-        const response = await ai.models.generateContent({
-            model,
-            contents: { parts: [filePart, { text: systemPrompt }] },
-            config: {
-                tools: [{ googleSearch: {} }],
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT,
-                        properties: {
-                            itemName: { type: Type.STRING },
-                            status: { type: Type.STRING },
-                            mismatchDetails: { type: Type.STRING },
-                            webData: {
-                                type: Type.OBJECT,
-                                properties: { price: { type: Type.STRING } }
-                            },
-                            fileData: {
-                                type: Type.OBJECT,
-                                properties: { price: { type: Type.STRING } }
-                            }
-                        },
-                        required: ["itemName", "status", "mismatchDetails"]
-                    }
+    const response = await ai.models.generateContent({
+        model,
+        contents: { 
+            parts: [
+                { inlineData: { mimeType, data: fileBase64 } },
+                { text: `Compare menu in IMAGE with ${webMenuUrl}. Return JSON.` }
+            ] 
+        },
+        config: {
+            tools: [{ googleSearch: {} }],
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        itemName: { type: Type.STRING },
+                        status: { type: Type.STRING },
+                        mismatchDetails: { type: Type.STRING },
+                        webData: { type: Type.OBJECT, properties: { price: { type: Type.STRING } } },
+                        fileData: { type: Type.OBJECT, properties: { price: { type: Type.STRING } } }
+                    },
+                    required: ["itemName", "status", "mismatchDetails"]
                 }
             }
-        });
-
-        const items = JSON.parse(extractJsonFromString(response.text)) as MenuCheckResultItem[];
-        const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-        const sources: GroundingSource[] = chunks
-            .filter((c: any) => c.web && (c.web.uri.includes(targetDomain) || c.web.uri === webMenuUrl))
-            .map((c: any) => ({
-                uri: c.web.uri,
-                title: c.web.title
-            }));
-
-        if (sources.length === 0 && items.length > 0) {
-            sources.push({ uri: webMenuUrl, title: "Official Audit Source" });
         }
+    });
 
-        return { items, sources };
-    } catch (err: any) {
-        throw err;
-    }
+    const items = JSON.parse(extractJsonFromString(response.text)) as MenuCheckResultItem[];
+    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    const sources = chunks
+        .filter((c: any) => c.web && (c.web.uri.includes(targetDomain) || c.web.uri === webMenuUrl))
+        .map((c: any) => ({ uri: c.web.uri, title: c.web.title }));
+
+    return { items, sources };
 }
 
 export async function generateCommunicationScript(path: string) {
@@ -225,6 +200,6 @@ export async function generateCommunicationScript(path: string) {
 export async function generateEmailDraft(scenario: string, context: string, tone: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
-    const response = await ai.models.generateContent({ model, contents: `Draft a professional Thai email for "${scenario}" tone "${tone}". Context: ${context}` });
+    const response = await ai.models.generateContent({ model, contents: `Draft a professional Thai email for "${scenario}" with tone "${tone}". Context: ${context}` });
     return response.text;
 }

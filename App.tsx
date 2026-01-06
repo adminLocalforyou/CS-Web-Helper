@@ -12,7 +12,7 @@ import LogsTab from './components/LogsTab';
 
 function App() {
     const [activeTab, setActiveTab] = useState(Tab.Delivery);
-    const [logs, setLogs] = useState([]);
+    const [logs, setLogs] = useState<LogEntry[]>([]);
 
     const addLog = useCallback(function(tool: string, input: any, output: string) {
         setLogs(function(prev: any) {
