@@ -92,9 +92,38 @@ export async function generateRcaSummary(failedItems: AuditResultItem[]) {
 export async function extractMenuData(imageBase64: string, mimeType: string, shopType: 'restaurant' | 'massage' = 'restaurant') {
     const ai = getAIInstance();
     const model = 'gemini-3-flash-preview';
-    let instructions = `Format each item as: [Item Name] Price : [Price] Description [Description] ---`;
+    
+    let instructions = "";
+    if (shopType === 'massage') {
+        instructions = `ACT AS A HIGH-PRECISION TEXT EXTRACTOR.
+        1. EXTRACT MASSAGE SERVICES FROM IMAGE. 
+        2. FORMAT RULES:
+           - Category : [Category Name]
+           - Service : [Service Name]
+           - [Service Name] - [Duration][Price]
+        3. NO PARENTHESES. NO BRACKETS. NO BOLDING (**).
+        4. OTHERS SECTION: Any text that is NOT a service or category (e.g., Shop Name, Address, Opening Hours, Phone, T&C) MUST be listed at the VERY END under a header:
+           Others
+           [Text found]
+        5. DO NOT include any introductory or concluding remarks. Just the data.`;
+    } else {
+        instructions = `ACT AS A HIGH-PRECISION TEXT EXTRACTOR.
+        1. EXTRACT RESTAURANT MENU ITEMS FROM IMAGE.
+        2. FORMAT RULES:
+           - Item : [Item Name]
+           - Price : [Price]
+           - Description : [Description]
+           - Use --- as separator after each item.
+        3. NO PARENTHESES. NO BRACKETS. NO BOLDING (**).
+        4. If no description, write "Description : -"
+        5. OTHERS SECTION: Any text that is NOT a menu item (e.g., Store Info, Location, Footer notes, Trading hours) MUST be listed at the VERY END under a header:
+           Others
+           [Text found]
+        6. DO NOT include any introductory or concluding remarks. Just the data.`;
+    }
+
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: instructions + "\n\nExtract all data from the image." };
+    const textPart = { text: instructions + "\n\nExtract all data from the image following the rules above strictly." };
     const response = await ai.models.generateContent({ model, contents: { parts: [imagePart, textPart] } });
     return response.text;
 }
