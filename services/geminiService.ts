@@ -2,6 +2,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCheckResult, GroundingSource } from '../types';
 
+/**
+ * ฟังก์ชันตรวจสอบและสร้าง AI Client
+ */
+function getAIClient() {
+    // พยายามดึงค่าจากหลายแหล่งที่อาจเป็นไปได้จากการ Build
+    const apiKey = process.env.API_KEY;
+
+    // ตรวจสอบเบื้องต้น
+    if (!apiKey || apiKey === "" || apiKey === "undefined" || apiKey.includes("$API_KEY")) {
+        console.error("DEBUG: Current API_KEY value is:", apiKey);
+        throw new Error("ระบบยังไม่ได้รับ API Key จาก Vercel (ค่าปัจจุบัน: " + apiKey + ") กรุณาตรวจสอบว่าชื่อตัวแปรใน Vercel คือ 'API_KEY' และได้ทำการ Redeploy แล้ว");
+    }
+
+    return new GoogleGenAI({ apiKey });
+}
+
 function extractJsonFromString(text: string) {
     try {
         const match = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
@@ -20,7 +36,7 @@ function extractJsonFromString(text: string) {
 }
 
 export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, facebookUrl: string) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const model = 'gemini-3-pro-preview';
     const response = await ai.models.generateContent({
         model,
@@ -47,7 +63,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
 }
 
 export async function performAudit(auditType: AuditType, auditData: any) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const model = 'gemini-3-pro-preview';
     let prompt = `Operations audit for ${auditType}. Data: ${JSON.stringify(auditData)}.`;
 
@@ -75,7 +91,7 @@ export async function performAudit(auditType: AuditType, auditData: any) {
 }
 
 export async function generateRcaSummary(failedItems: AuditResultItem[]) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const model = 'gemini-3-pro-preview';
     const prompt = `Perform a Root Cause Analysis (RCA) summary: ${JSON.stringify(failedItems)}.`;
     const response = await ai.models.generateContent({ model, contents: prompt });
@@ -83,52 +99,46 @@ export async function generateRcaSummary(failedItems: AuditResultItem[]) {
 }
 
 export async function extractMenuData(imageBase64: string, mimeType: string, shopType: 'restaurant' | 'massage' = 'restaurant') {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const model = 'gemini-3-flash-preview';
     
     let instructions = "";
     if (shopType === 'massage') {
         instructions = `ACT AS A TEXT EXTRACTOR FOR MASSAGE SERVICES.
         
-        STRICT FORMAT RULES:
-        1. Category : [Category Name]
-        2. Service : [Service Name]
-        3. [Service Name] - [Duration] [Price]
-        4. NO PARENTHESES AT ALL. (e.g., use 60mins instead of (60mins))
-        5. NO BRACKETS AT ALL.
-        6. NO MARKDOWN BOLDING AT ALL. (e.g., Do NOT use ** anywhere)
-        7. OTHERS SECTION: Any text that is NOT a service or category MUST be placed under a header "Others" at the VERY BOTTOM.
+        STRICT FORMAT RULES (MANDATORY):
+        1. NO MARKDOWN BOLDING AT ALL. (Do NOT use ** anywhere in the response)
+        2. NO PARENTHESES OR BRACKETS AT ALL.
+        3. OTHERS SECTION: Put any text that is NOT a service or category under a single "Others" header at the VERY BOTTOM.
         
-        Example:
+        Example Output Format:
         Category : Thai Massage
         Service : Traditional Thai
         Traditional Thai - 60mins $70
         
         Others
-        Sunshine Spa
-        Address: 123 Street`;
+        Sunshine Spa`;
     } else {
         instructions = `ACT AS A TEXT EXTRACTOR FOR RESTAURANT MENUS.
         
-        STRICT FORMAT RULES:
+        STRICT FORMAT RULES (MANDATORY):
         1. Item : [Item Name]
         2. Price : [Price]
         3. Description : [Description]
-        4. Use "---" as a separator ONLY between items.
-        5. NO PARENTHESES AT ALL. (e.g., use Small instead of (Small))
-        6. NO BRACKETS AT ALL.
-        7. NO MARKDOWN BOLDING AT ALL. (e.g., Do NOT use ** anywhere)
-        8. OTHERS SECTION: Any text that is NOT a menu item MUST be placed under a header "Others" at the VERY BOTTOM.
+        4. Use "---" as a separator ONLY between menu items.
+        5. NO MARKDOWN BOLDING AT ALL.
+        6. NO PARENTHESES OR BRACKETS AT ALL.
+        7. If no description, use "Description : -"
+        8. OTHERS SECTION: Put any text that is NOT a menu item under a single "Others" header at the VERY BOTTOM.
         
-        Example:
+        Example Output Format:
         Item : Pad Thai
         Price : $18.50
-        Description : Stir-fried rice noodles.
+        Description : -
         ---
         
         Others
-        Baan Thai Restaurant
-        Open daily 11am-10pm`;
+        Baan Thai Restaurant`;
     }
 
     const response = await ai.models.generateContent({ 
@@ -136,7 +146,7 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         contents: { 
             parts: [
                 { inlineData: { mimeType, data: imageBase64 } },
-                { text: instructions + "\n\nPlease extract text according to rules." }
+                { text: instructions + "\n\nPlease extract all text from this image following the strict formatting rules above." }
             ] 
         } 
     });
@@ -144,7 +154,7 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
 }
 
 export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mimeType: string): Promise<MenuCheckResult> {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const model = 'gemini-3-pro-preview';
     
     let targetDomain = "";
@@ -191,14 +201,14 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
 }
 
 export async function generateCommunicationScript(path: string) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({ model, contents: `Generate a polite Thai support script for: ${path}` });
     return response.text;
 }
 
 export async function generateEmailDraft(scenario: string, context: string, tone: string) {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({ model, contents: `Draft a professional Thai email for "${scenario}" with tone "${tone}". Context: ${context}` });
     return response.text;
