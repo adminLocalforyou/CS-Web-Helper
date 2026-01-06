@@ -6,16 +6,19 @@ import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCh
  * ฟังก์ชันตรวจสอบและสร้าง AI Client
  */
 function getAIClient() {
-    // พยายามดึงค่าจากหลายแหล่งที่อาจเป็นไปได้จากการ Build
-    const apiKey = process.env.API_KEY;
+    // ดึงค่าที่ถูกฉีดเข้ามาตอน Build
+    let apiKey = process.env.API_KEY;
 
-    // ตรวจสอบเบื้องต้น
+    // ถ้าค่าที่ได้คือข้อความที่ยังไม่ได้ถูกแทนที่ หรือเป็นค่าว่าง
     if (!apiKey || apiKey === "" || apiKey === "undefined" || apiKey.includes("$API_KEY")) {
-        console.error("DEBUG: Current API_KEY value is:", apiKey);
-        throw new Error("ระบบยังไม่ได้รับ API Key จาก Vercel (ค่าปัจจุบัน: " + apiKey + ") กรุณาตรวจสอบว่าชื่อตัวแปรใน Vercel คือ 'API_KEY' และได้ทำการ Redeploy แล้ว");
+        console.error("DEBUG: API Key detection failed. Value is:", apiKey);
+        throw new Error("⚠️ ไม่พบ API Key: โปรดตรวจสอบว่าใน Vercel ตั้งชื่อตัวแปรว่า 'API_KEY' (พิมพ์ใหญ่ทั้งหมด) และได้กด Redeploy หลังจากตั้งค่าแล้ว");
     }
 
-    return new GoogleGenAI({ apiKey });
+    // ล้างเครื่องหมายคำพูดที่อาจหลุดมาจากการ Build script
+    const cleanKey = apiKey.replace(/^['"]|['"]$/g, '');
+
+    return new GoogleGenAI({ apiKey: cleanKey });
 }
 
 function extractJsonFromString(text: string) {
