@@ -3,17 +3,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCheckResult, GroundingSource } from '../types';
 
 /**
- * ฟังก์ชันสร้าง Instance ของ Gemini AI
+ * ฟังก์ชันช่วยในการสกัด JSON จากข้อความที่ AI ส่งกลับมา
  */
-function getAIInstance() {
-    // ใช้ค่าจาก process.env.API_KEY โดยตรงตามมาตรฐาน SDK
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined') {
-        throw new Error("API Key is not configured. Please check your environment variables.");
-    }
-    return new GoogleGenAI({ apiKey });
-}
-
 function extractJsonFromString(text: string) {
     try {
         const match = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
@@ -32,7 +23,7 @@ function extractJsonFromString(text: string) {
 }
 
 export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, facebookUrl: string) {
-    const ai = getAIInstance();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
@@ -58,7 +49,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
 }
 
 export async function performAudit(auditType: AuditType, auditData: any) {
-    const ai = getAIInstance();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     let prompt = `Operations audit for ${auditType}. Data: ${JSON.stringify(auditData)}.`;
 
@@ -86,7 +77,7 @@ export async function performAudit(auditType: AuditType, auditData: any) {
 }
 
 export async function generateRcaSummary(failedItems: AuditResultItem[]) {
-    const ai = getAIInstance();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const prompt = `Perform a Root Cause Analysis (RCA) summary for the following audit failures: ${JSON.stringify(failedItems)}.`;
     const response = await ai.models.generateContent({ model, contents: prompt });
@@ -94,7 +85,7 @@ export async function generateRcaSummary(failedItems: AuditResultItem[]) {
 }
 
 export async function extractMenuData(imageBase64: string, mimeType: string, shopType: 'restaurant' | 'massage' = 'restaurant') {
-    const ai = getAIInstance();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     
     let instructions = "";
@@ -104,13 +95,13 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         STRICT FORMAT RULES:
         1. Category : [Category Name]
         2. Service : [Service Name]
-        3. [Service Name] - [Duration][Price]
-        4. NO PARENTHESES AT ALL. (e.g. Do NOT use "(60 min)")
+        3. [Service Name] - [Duration] [Price]
+        4. NO PARENTHESES AT ALL. (Example: Use 60mins instead of (60mins))
         5. NO BRACKETS AT ALL.
-        6. NO BOLDING AT ALL. (DO NOT USE ** ANYWHERE)
-        7. OTHERS SECTION: ANY text that is NOT a service or category (e.g., Shop Name, Address, Phone, Hours) MUST be placed under a header "Others" at the VERY BOTTOM.
+        6. NO MARKDOWN BOLDING AT ALL. (Example: Do NOT use ** anywhere)
+        7. OTHERS SECTION: Any text that is NOT a service or category (e.g., Shop Name, Address, Phone, Hours) MUST be placed under a single header "Others" at the VERY BOTTOM of the response.
         
-        Example:
+        Example Output Format:
         Category : Thai Massage
         Service : Traditional Thai
         Traditional Thai - 60mins $70
@@ -127,14 +118,14 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         1. Item : [Item Name]
         2. Price : [Price]
         3. Description : [Description]
-        4. Use "---" ONLY as a separator between items.
-        5. NO PARENTHESES AT ALL. (e.g. Do NOT use "(Small)")
+        4. Use "---" as a separator ONLY between menu items.
+        5. NO PARENTHESES AT ALL. (Example: Use Small instead of (Small))
         6. NO BRACKETS AT ALL.
-        7. NO BOLDING AT ALL. (DO NOT USE ** ANYWHERE)
+        7. NO MARKDOWN BOLDING AT ALL. (Example: Do NOT use ** anywhere)
         8. If no description, use "Description : -"
-        9. OTHERS SECTION: ANY text that is NOT a menu item (e.g., Restaurant Name, Address, Opening Hours, Surcharge) MUST be placed under a header "Others" at the VERY BOTTOM.
+        9. OTHERS SECTION: Any text that is NOT a menu item (e.g., Restaurant Name, Address, Website, T&C) MUST be placed under a single header "Others" at the VERY BOTTOM of the response.
         
-        Example:
+        Example Output Format:
         Item : Pad Thai
         Price : $18.50
         Description : Stir-fried rice noodles with egg.
@@ -146,17 +137,24 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         
         Others
         Baan Thai Restaurant
-        10% Surcharge on Sunday`;
+        10% Surcharge on Sunday
+        Open daily 11am-10pm`;
     }
 
-    const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: instructions + "\n\nPlease extract all text from this image and format it exactly as specified above." };
-    const response = await ai.models.generateContent({ model, contents: { parts: [imagePart, textPart] } });
+    const response = await ai.models.generateContent({ 
+        model, 
+        contents: { 
+            parts: [
+                { inlineData: { mimeType, data: imageBase64 } },
+                { text: instructions + "\n\nPlease extract all text from this image according to the strict rules above." }
+            ] 
+        } 
+    });
     return response.text;
 }
 
 export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mimeType: string): Promise<MenuCheckResult> {
-    const ai = getAIInstance();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     
     let targetDomain = "";
@@ -218,14 +216,14 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
 }
 
 export async function generateCommunicationScript(path: string) {
-    const ai = getAIInstance();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({ model, contents: `Generate a polite Thai support script for: ${path}` });
     return response.text;
 }
 
 export async function generateEmailDraft(scenario: string, context: string, tone: string) {
-    const ai = getAIInstance();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({ model, contents: `Draft a professional Thai email for "${scenario}" tone "${tone}". Context: ${context}` });
     return response.text;
