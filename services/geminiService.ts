@@ -3,20 +3,24 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCheckResult, GroundingSource } from '../types';
 
 /**
- * ฟังก์ชันตรวจสอบและสร้าง AI Client
+ * ฟังก์ชันดึงและทำความสะอาด API Key
  */
 function getAIClient() {
-    // ดึงค่าที่ถูกฉีดเข้ามาตอน Build
-    let apiKey = process.env.API_KEY;
+    // พยายามดึงค่าจากหลายรูปแบบที่ระบบ Build อาจจะส่งมา
+    let apiKey = process.env.API_KEY || (window as any).process?.env?.API_KEY;
 
-    // ถ้าค่าที่ได้คือข้อความที่ยังไม่ได้ถูกแทนที่ หรือเป็นค่าว่าง
+    // ตรวจสอบว่าได้ค่าจริงไหม หรือเป็นแค่ชื่อตัวแปรค้างอยู่
     if (!apiKey || apiKey === "" || apiKey === "undefined" || apiKey.includes("$API_KEY")) {
-        console.error("DEBUG: API Key detection failed. Value is:", apiKey);
-        throw new Error("⚠️ ไม่พบ API Key: โปรดตรวจสอบว่าใน Vercel ตั้งชื่อตัวแปรว่า 'API_KEY' (พิมพ์ใหญ่ทั้งหมด) และได้กด Redeploy หลังจากตั้งค่าแล้ว");
+        console.error("DEBUG: API Key Check Failed. Current Value:", apiKey);
+        throw new Error("⚠️ ไม่พบ API Key: ระบบ Build มองไม่เห็นค่าที่คุณตั้งไว้ใน Vercel โปรดกด 'Redeploy' อีกครั้งที่หน้า Deployments เพื่ออัปเดตค่าครับ");
     }
 
-    // ล้างเครื่องหมายคำพูดที่อาจหลุดมาจากการ Build script
-    const cleanKey = apiKey.replace(/^['"]|['"]$/g, '');
+    // ล้างเครื่องหมายคำพูดที่อาจติดมาจากการ Build (เช่น '...' หรือ "...") ให้เหลือแต่ Key ล้วนๆ
+    const cleanKey = apiKey.trim().replace(/^['"]|['"]$/g, '');
+
+    if (cleanKey.length < 10) {
+        throw new Error("⚠️ API Key สั้นเกินไป: โปรดตรวจสอบว่าใส่ Key (AIza...) ถูกต้องในช่อง Value ของ Vercel");
+    }
 
     return new GoogleGenAI({ apiKey: cleanKey });
 }
