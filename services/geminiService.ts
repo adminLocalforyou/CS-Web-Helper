@@ -3,16 +3,13 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCheckResult, GroundingSource } from '../types';
 
 /**
- * ฟังก์ชันสร้าง Instance ของ Gemini AI โดยตรวจสอบ API Key จาก Environment
+ * ฟังก์ชันสร้าง Instance ของ Gemini AI
  */
 function getAIInstance() {
-    // พยายามเข้าถึง API Key จากหลายช่องทางเพื่อป้องกันปัญหา Environment Mismatch
-    const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) 
-                 || (window as any).process?.env?.API_KEY;
-
+    // ใช้ค่าจาก process.env.API_KEY โดยตรงตามมาตรฐาน SDK
+    const apiKey = process.env.API_KEY;
     if (!apiKey || apiKey === 'undefined') {
-        console.error("Critical: API Key is missing. Make sure API_KEY environment variable is set.");
-        throw new Error("API Key is not configured. Please check your deployment settings.");
+        throw new Error("API Key is not configured. Please check your environment variables.");
     }
     return new GoogleGenAI({ apiKey });
 }
@@ -108,10 +105,10 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         1. Category : [Category Name]
         2. Service : [Service Name]
         3. [Service Name] - [Duration][Price]
-        4. NO PARENTHESES AT ALL. (e.g. Do not use "(60 min)")
+        4. NO PARENTHESES AT ALL. (e.g. Do NOT use "(60 min)")
         5. NO BRACKETS AT ALL.
-        6. NO BOLDING AT ALL. (DO NOT USE ** anywhere)
-        7. OTHERS SECTION: ANY text that is NOT a service or category (e.g., Shop Name, Address, Phone, Hours) MUST be placed under the header "Others" at the VERY BOTTOM.
+        6. NO BOLDING AT ALL. (DO NOT USE ** ANYWHERE)
+        7. OTHERS SECTION: ANY text that is NOT a service or category (e.g., Shop Name, Address, Phone, Hours) MUST be placed under a header "Others" at the VERY BOTTOM.
         
         Example:
         Category : Thai Massage
@@ -121,6 +118,7 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         
         Others
         Sunshine Spa
+        Address: 123 Street
         Phone: 021234567`;
     } else {
         instructions = `ACT AS A TEXT EXTRACTOR FOR RESTAURANT MENUS.
@@ -129,12 +127,12 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         1. Item : [Item Name]
         2. Price : [Price]
         3. Description : [Description]
-        4. Separator: Use "---" ONLY between items.
-        5. NO PARENTHESES AT ALL. (e.g. Do not use "(Small)")
+        4. Use "---" ONLY as a separator between items.
+        5. NO PARENTHESES AT ALL. (e.g. Do NOT use "(Small)")
         6. NO BRACKETS AT ALL.
-        7. NO BOLDING AT ALL. (DO NOT USE ** anywhere)
+        7. NO BOLDING AT ALL. (DO NOT USE ** ANYWHERE)
         8. If no description, use "Description : -"
-        9. OTHERS SECTION: ANY text that is NOT a menu item (e.g., Restaurant Name, Address, Website, T&C) MUST be placed under the header "Others" at the VERY BOTTOM.
+        9. OTHERS SECTION: ANY text that is NOT a menu item (e.g., Restaurant Name, Address, Opening Hours, Surcharge) MUST be placed under a header "Others" at the VERY BOTTOM.
         
         Example:
         Item : Pad Thai
@@ -152,7 +150,7 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
     }
 
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: instructions + "\n\nExtract all text from this image following the rules above strictly." };
+    const textPart = { text: instructions + "\n\nPlease extract all text from this image and format it exactly as specified above." };
     const response = await ai.models.generateContent({ model, contents: { parts: [imagePart, textPart] } });
     return response.text;
 }
@@ -168,7 +166,7 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
     } catch (e) {}
 
     const filePart = { inlineData: { mimeType, data: fileBase64 } };
-    const systemPrompt = `Compare IMAGE with LIVE menu at ${webMenuUrl}. Output JSON.`;
+    const systemPrompt = `Compare menu items in IMAGE with LIVE menu at ${webMenuUrl}. Output JSON.`;
 
     try {
         const response = await ai.models.generateContent({
