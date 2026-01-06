@@ -3,10 +3,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCheckResult, GroundingSource } from '../types';
 
 function getAIInstance() {
-    // ป้องกันหน้าขาวโดยการเช็ค API_KEY อย่างละเอียด
     const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
     if (!apiKey) {
-        throw new Error("API Key is not configured. Please check your environment variables.");
+        throw new Error("API Key is not configured.");
     }
     return new GoogleGenAI({ apiKey });
 }
@@ -96,46 +95,43 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
     
     let instructions = "";
     if (shopType === 'massage') {
-        instructions = `ACT AS A TEXT EXTRACTOR. 
-        EXTRACT MASSAGE SERVICES.
+        instructions = `ACT AS A TEXT EXTRACTOR FOR MASSAGE SERVICES.
         
-        FORMAT RULES (STRICT):
+        FORMAT RULES:
         1. Category : [Category Name]
         2. Service : [Service Name]
         3. [Service Name] - [Duration][Price]
-        4. NO PARENTHESES ().
-        5. NO BRACKETS [].
-        6. NO BOLDING (**).
-        7. OTHERS SECTION: Put any other text (Address, Phone, Shop Name) at the VERY END under a header "Others".
+        4. STRICTLY NO PARENTHESES () OR BRACKETS [].
+        5. STRICTLY NO MARKDOWN BOLDING (DO NOT USE **).
+        6. OTHERS SECTION: ANY text that is NOT a service or category (e.g., Shop Name, Address, Phone, Opening Hours, T&C) MUST be grouped under the header "Others" at the VERY BOTTOM of the response.
         
-        Example:
+        Example Output:
         Category : Thai Massage
         Service : Traditional Thai
         Traditional Thai - 60mins $70
         Traditional Thai - 90mins $100
         
         Others
-        Open Daily 10am-9pm
-        Phone 0412345678`;
+        Sunshine Spa
+        Address: 123 Main St
+        Phone: 021234567`;
     } else {
-        instructions = `ACT AS A TEXT EXTRACTOR.
-        EXTRACT RESTAURANT MENU ITEMS.
+        instructions = `ACT AS A TEXT EXTRACTOR FOR RESTAURANT MENUS.
         
-        FORMAT RULES (STRICT):
+        FORMAT RULES:
         1. Item : [Item Name]
         2. Price : [Price]
         3. Description : [Description]
-        4. Use "---" to separate each item.
-        5. NO PARENTHESES ().
-        6. NO BRACKETS [].
-        7. NO BOLDING (**).
-        8. If no description, use "Description : -"
-        9. OTHERS SECTION: Put any other text (Address, Phone, Trading Hours, Shop Name) at the VERY END under a header "Others".
+        4. Use "---" as a separator ONLY between menu items.
+        5. STRICTLY NO PARENTHESES () OR BRACKETS [].
+        6. STRICTLY NO MARKDOWN BOLDING (DO NOT USE **).
+        7. If no description, use "Description : -"
+        8. OTHERS SECTION: ANY text that is NOT a menu item (e.g., Restaurant Name, Address, Website, Opening Hours, Surcharge info) MUST be grouped under the header "Others" at the VERY BOTTOM of the response.
         
-        Example:
+        Example Output:
         Item : Pad Thai
         Price : $18.50
-        Description : Stir-fried noodles with egg and tofu.
+        Description : Stir-fried noodles with egg and sprouts.
         ---
         Item : Spring Rolls
         Price : $8.00
@@ -143,12 +139,13 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         ---
         
         Others
-        Located at Level 1, Sydney Mall
-        Tel: 02 9876 5432`;
+        Baan Thai Restaurant
+        10% Surcharge on Sundays
+        Open daily 11am - 10pm`;
     }
 
     const imagePart = { inlineData: { mimeType, data: imageBase64 } };
-    const textPart = { text: instructions + "\n\nExtract text from the attached image strictly following the format rules above." };
+    const textPart = { text: instructions + "\n\nPlease extract all visible text from the image accurately." };
     const response = await ai.models.generateContent({ model, contents: { parts: [imagePart, textPart] } });
     return response.text;
 }
@@ -164,7 +161,7 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
     } catch (e) {}
 
     const filePart = { inlineData: { mimeType, data: fileBase64 } };
-    const systemPrompt = `ACT AS A FORENSIC AUDITOR. Compare IMAGE items with LIVE menu at ${webMenuUrl}. No hallucination.`;
+    const systemPrompt = `Compare menu items in IMAGE with LIVE menu at ${webMenuUrl}.`;
 
     try {
         const response = await ai.models.generateContent({
