@@ -13,7 +13,8 @@ import ProcedureTab from './components/ProcedureTab';
 import LogsTab from './components/LogsTab';
 
 function App() {
-    const [activeTab, setActiveTab] = useState(Tab.Procedure);
+    // เปลี่ยนค่าเริ่มต้นเป็น Tab.Scope (Scope of Handling)
+    const [activeTab, setActiveTab] = useState(Tab.Scope);
     const [logs, setLogs] = useState<LogEntry[]>([]);
 
     const addLog = useCallback(function(tool: string, input: any, output: string) {
@@ -56,24 +57,24 @@ function App() {
                     <div className="flex flex-wrap gap-3">
                         <button
                             onClick={() => setActiveTab(Tab.Scope)}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 font-black text-[12px] tracking-wide transition-all shadow-sm ${
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl border-2 font-black text-[12px] tracking-wide transition-all duration-200 transform hover:-translate-y-0.5 shadow-sm active:scale-95 ${
                                 activeTab === Tab.Scope 
-                                ? 'bg-indigo-50 border-indigo-600 text-indigo-700 shadow-md' 
-                                : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200'
+                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-200 shadow-lg' 
+                                : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200 hover:bg-slate-50'
                             }`}
                         >
-                            <span>🛡️</span>
+                            <span className={activeTab === Tab.Scope ? "filter brightness-0 invert" : ""}>🛡️</span>
                             <span>SCOPE OF HANDLING</span>
                         </button>
                         <button
                             onClick={() => setActiveTab(Tab.Procedure)}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 font-black text-[12px] tracking-wide transition-all shadow-sm ${
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl border-2 font-black text-[12px] tracking-wide transition-all duration-200 transform hover:-translate-y-0.5 shadow-sm active:scale-95 ${
                                 activeTab === Tab.Procedure 
-                                ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-md' 
-                                : 'bg-white border-slate-100 text-slate-500 hover:border-emerald-100'
+                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-emerald-200 shadow-lg' 
+                                : 'bg-white border-slate-100 text-slate-500 hover:border-emerald-100 hover:bg-slate-50'
                             }`}
                         >
-                            <span>📋</span>
+                            <span className={activeTab === Tab.Procedure ? "filter brightness-0 invert" : ""}>📋</span>
                             <span>CS PROCEDURE HUB</span>
                         </button>
                     </div>
