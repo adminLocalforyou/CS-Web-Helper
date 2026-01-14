@@ -6,22 +6,13 @@ import { AuditResultItem, AuditType, MenuCheckResultItem, AnalysisResult, MenuCh
  * ฟังก์ชันดึงและทำความสะอาด API Key
  */
 function getAIClient() {
-    // พยายามดึงค่าจากหลายรูปแบบที่ระบบ Build อาจจะส่งมา
     let apiKey = process.env.API_KEY || (window as any).process?.env?.API_KEY;
 
-    // ตรวจสอบว่าได้ค่าจริงไหม หรือเป็นแค่ชื่อตัวแปรค้างอยู่
     if (!apiKey || apiKey === "" || apiKey === "undefined" || apiKey.includes("$API_KEY")) {
-        console.error("DEBUG: API Key Check Failed. Current Value:", apiKey);
-        throw new Error("⚠️ ไม่พบ API Key: ระบบ Build มองไม่เห็นค่าที่คุณตั้งไว้ใน Vercel โปรดกด 'Redeploy' อีกครั้งที่หน้า Deployments เพื่ออัปเดตค่าครับ");
+        throw new Error("⚠️ ไม่พบ API Key: ระบบ Build มองไม่เห็นค่าที่คุณตั้งไว้ใน Vercel โปรดกด 'Redeploy' อีกครั้งที่หน้า Deployments");
     }
 
-    // ล้างเครื่องหมายคำพูดที่อาจติดมาจากการ Build (เช่น '...' หรือ "...") ให้เหลือแต่ Key ล้วนๆ
     const cleanKey = apiKey.trim().replace(/^['"]|['"]$/g, '');
-
-    if (cleanKey.length < 10) {
-        throw new Error("⚠️ API Key สั้นเกินไป: โปรดตรวจสอบว่าใส่ Key (AIza...) ถูกต้องในช่อง Value ของ Vercel");
-    }
-
     return new GoogleGenAI({ apiKey: cleanKey });
 }
 
@@ -44,7 +35,8 @@ function extractJsonFromString(text: string) {
 
 export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, facebookUrl: string) {
     const ai = getAIClient();
-    const model = 'gemini-3-pro-preview';
+    // ใช้ Flash เพื่อเพิ่ม Quota สำหรับงาน Search
+    const model = 'gemini-3-flash-preview';
     const response = await ai.models.generateContent({
         model,
         contents: `Analyze these URLs and return JSON with keyFindings, qualitativeAssessment, and emailDraft:
@@ -71,7 +63,7 @@ export async function analyzeStorePresence(websiteUrl: string, gmbUrl: string, f
 
 export async function performAudit(auditType: AuditType, auditData: any) {
     const ai = getAIClient();
-    const model = 'gemini-3-pro-preview';
+    const model = 'gemini-3-flash-preview';
     let prompt = `Operations audit for ${auditType}. Data: ${JSON.stringify(auditData)}.`;
 
     const response = await ai.models.generateContent({
@@ -99,7 +91,7 @@ export async function performAudit(auditType: AuditType, auditData: any) {
 
 export async function generateRcaSummary(failedItems: AuditResultItem[]) {
     const ai = getAIClient();
-    const model = 'gemini-3-pro-preview';
+    const model = 'gemini-3-flash-preview';
     const prompt = `Perform a Root Cause Analysis (RCA) summary: ${JSON.stringify(failedItems)}.`;
     const response = await ai.models.generateContent({ model, contents: prompt });
     return response.text;
@@ -114,17 +106,9 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         instructions = `ACT AS A TEXT EXTRACTOR FOR MASSAGE SERVICES.
         
         STRICT FORMAT RULES (MANDATORY):
-        1. NO MARKDOWN BOLDING AT ALL. (Do NOT use ** anywhere in the response)
+        1. NO MARKDOWN BOLDING AT ALL.
         2. NO PARENTHESES OR BRACKETS AT ALL.
-        3. OTHERS SECTION: Put any text that is NOT a service or category under a single "Others" header at the VERY BOTTOM.
-        
-        Example Output Format:
-        Category : Thai Massage
-        Service : Traditional Thai
-        Traditional Thai - 60mins $70
-        
-        Others
-        Sunshine Spa`;
+        3. OTHERS SECTION: Put any text that is NOT a service or category under a single "Others" header at the VERY BOTTOM.`;
     } else {
         instructions = `ACT AS A TEXT EXTRACTOR FOR RESTAURANT MENUS.
         
@@ -136,16 +120,7 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
         5. NO MARKDOWN BOLDING AT ALL.
         6. NO PARENTHESES OR BRACKETS AT ALL.
         7. If no description, use "Description : -"
-        8. OTHERS SECTION: Put any text that is NOT a menu item under a single "Others" header at the VERY BOTTOM.
-        
-        Example Output Format:
-        Item : Pad Thai
-        Price : $18.50
-        Description : -
-        ---
-        
-        Others
-        Baan Thai Restaurant`;
+        8. OTHERS SECTION: Put any text that is NOT a menu item under a single "Others" header at the VERY BOTTOM.`;
     }
 
     const response = await ai.models.generateContent({ 
@@ -162,7 +137,8 @@ export async function extractMenuData(imageBase64: string, mimeType: string, sho
 
 export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mimeType: string): Promise<MenuCheckResult> {
     const ai = getAIClient();
-    const model = 'gemini-3-pro-preview';
+    // สลับเป็น Flash-Preview เพื่อเลี่ยงปัญหา Quota 429
+    const model = 'gemini-3-flash-preview';
     
     let targetDomain = "";
     try {
@@ -175,7 +151,7 @@ export async function crossCheckMenu(webMenuUrl: string, fileBase64: string, mim
         contents: { 
             parts: [
                 { inlineData: { mimeType, data: fileBase64 } },
-                { text: `Compare menu in IMAGE with ${webMenuUrl}. Return JSON.` }
+                { text: `Compare menu in IMAGE with prices found at ${webMenuUrl}. Return JSON format.` }
             ] 
         },
         config: {

@@ -88,7 +88,12 @@ function MenuCheckTab({ addLog }: TabProps) {
             setSources(checkResult.sources);
             addLog('Menu Forensic Audit', { webMenuUrl }, 'Success');
         } catch (err: any) {
-            setError(err.message);
+            const errorMsg = err.message || String(err);
+            if (errorMsg.includes('429')) {
+                setError('🚦 โควตาการใช้ AI Search เต็มชั่วคราว (Gemini 429): เนื่องจากมีการกดใช้งานพร้อมกันหลายคน หรือกดย้ำบ่อยเกินไป \n\n✅ วิธีแก้: โปรดรอประมาณ 30-60 วินาที แล้วลองกดใหม่อีกครั้งครับ');
+            } else {
+                setError(errorMsg);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -97,19 +102,19 @@ function MenuCheckTab({ addLog }: TabProps) {
     return (
         <section id={"menu"}>
             <div className="mb-4">
-                <h2 className={"text-2xl font-bold text-gray-800"}>{"Forensic Menu Audit 6.0"}</h2>
-                <p className={"text-gray-600 mt-1"}>{"เปรียบเทียบราคาบนเว็บไซต์ด้วย AI Search อย่างแม่นยำ"}</p>
+                <h2 className={"text-2xl font-bold text-gray-800"}>{"Forensic Menu Audit 6.1"}</h2>
+                <div className="flex items-center gap-2">
+                    <p className={"text-gray-600 mt-1"}>{"เปรียบเทียบราคาบนเว็บไซต์ด้วย AI Search (High Quota Mode)"}</p>
+                    <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase mt-1">{"Ready"}</span>
+                </div>
             </div>
 
             <div className={"bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded-r-xl shadow-sm"}>
-                <p className={"text-sm text-amber-800 font-bold"}>{"⚠️ ข้อควรรู้: หากพบปัญหาโควตาเต็ม (429 Error)"}</p>
-                <p className={"text-xs text-amber-700 mt-1 leading-relaxed"}>
-                    {"หากมีการใช้งาน AI บ่อยเกินไปใน 1 นาที ระบบอาจแจ้ง Error 429 "}
-                    <span className="font-bold underline">{"วิธีแก้ไข: ให้รอประมาณ 1 นาทีแล้วกด 'Start' อีกครั้ง"}</span>
-                    {" หรือสลับไปใช้แท็บ "}
-                    <span className="font-bold">{"'AI Scan Text'"}</span>
-                    {" เพื่อนำข้อมูลมาเปรียบเทียบเอง จะช่วยลดภาระการใช้ AI Search และทำงานได้ต่อเนื่องกว่า"}
-                </p>
+                <p className={"text-sm text-amber-800 font-bold"}>{"💡 คำแนะนำเพื่อเลี่ยงปัญหาโควตาเต็ม"}</p>
+                <ul className={"text-xs text-amber-700 mt-2 space-y-1 list-disc pl-4"}>
+                    <li>{"หลีกเลี่ยงการกดปุ่ม 'Start' ย้ำๆ ในขณะที่ระบบกำลังประมวลผล"}</li>
+                    <li>{"หากเจอ Error 429 บ่อยๆ แนะนำให้สลับไปใช้เมนู 'AI Scan Text' เพื่อดึงข้อมูลข้อความออกมาตรวจสอบเองชั่วคราว"}</li>
+                </ul>
             </div>
 
             <div className={"space-y-4 mb-6"}>
@@ -137,23 +142,31 @@ function MenuCheckTab({ addLog }: TabProps) {
                 className={"w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg disabled:bg-gray-300 flex justify-center items-center transition-all active:scale-95"}
             >
                 {isLoading && <LoadingSpinner />}
-                {isLoading ? 'กำลังค้นหาและตรวจสอบข้อมูล (ห้ามกุราคา)...' : 'Start Forensic Audit'}
+                {isLoading ? 'กำลังค้นหาและตรวจสอบข้อมูลด้วย AI...' : 'Start Forensic Audit'}
             </button>
 
             {error && (
-                <div className={"mt-4 p-4 bg-red-100 text-red-800 rounded-xl border border-red-200 shadow-sm"}>
+                <div className={"mt-4 p-4 bg-red-50 text-red-800 rounded-xl border border-red-200 shadow-md"}>
                     <p className="font-bold flex items-center">
-                        <span className="mr-2 text-xl">🚨</span> {"พบปัญหาในการตรวจสอบ"}
+                        <span className="mr-2 text-xl">🚥</span> {"สถานะระบบ"}
                     </p>
-                    <p className="text-sm mt-2 whitespace-pre-wrap">{error}</p>
+                    <p className="text-sm mt-2 whitespace-pre-wrap leading-relaxed">{error}</p>
+                    {error.includes('429') && (
+                        <button 
+                            onClick={runCrossCheck}
+                            className="mt-4 w-full bg-white border border-red-300 text-red-700 py-2 rounded-lg text-xs font-bold hover:bg-red-50 transition"
+                        >
+                            {"ลองกดใหม่อีกครั้ง (Retry)"}
+                        </button>
+                    )}
                 </div>
             )}
 
             {results && (
                 <div className={"mt-8 border-t pt-6"}>
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className={"text-xl font-semibold text-gray-800"}>{"Audit Evidence (ผลการตรวจสอบตามจริง)"}</h3>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-500 font-bold uppercase tracking-tighter">{"No Hallucination Protocol"}</span>
+                        <h3 className={"text-xl font-semibold text-gray-800"}>{"Audit Evidence (ผลการตรวจสอบ)"}</h3>
+                        <span className="text-[10px] bg-indigo-100 px-2 py-1 rounded-md text-indigo-700 font-bold uppercase">{"Verified by Gemini Flash"}</span>
                     </div>
                     
                     <div className={"space-y-0"}>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export const IHD_ADMIN_LINK = (
@@ -904,7 +905,7 @@ export const deliveryFlow: any = {
     }
   },
   'call-new-driver': {
-    title: '6. เรียกคนขับ IHD มาไห้ร้าน',
+    title: '6. เรียกคนขับ IHD มาให้ร้าน',
     description: '(ใช้สำหรับส่งออเดอร์ไป location นั้นๆอีกรอบโดยไม่ผ่านระบบ)\n(พบมากในการที่ร้านส่งอาหารไม่ครบ)',
     isFinal: true,
     content: (
