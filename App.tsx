@@ -46,24 +46,38 @@ function App() {
         <div className={"p-4 sm:p-8 bg-slate-50 min-h-screen"}>
             <Header />
             <main className={"max-w-7xl mx-auto bg-white rounded-xl shadow-2xl p-4 sm:p-8"}>
-                <div className={"flex flex-wrap border-b border-gray-200 mb-6"}>
-                    {tabs.map(function(tab) {
-                        const isActive = (activeTab === tab.id);
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={function() { setActiveTab(tab.id); }}
-                                className={"px-4 py-3 text-sm font-semibold border-b-2 transition duration-150 " + (
-                                    isActive 
-                                    ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
-                                    : 'border-transparent text-gray-600 hover:text-indigo-600 hover:border-gray-300'
-                                )}
-                            >
-                                {tab.label}
-                            </button>
-                        );
-                    })}
+                <div className={"flex flex-wrap items-center border-b border-gray-200 mb-6 gap-2"}>
+                    <div className={"flex flex-wrap flex-grow"}>
+                        {tabs.map(function(tab) {
+                            const isActive = (activeTab === tab.id);
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={function() { setActiveTab(tab.id); }}
+                                    className={"px-4 py-3 text-sm font-semibold border-b-2 transition duration-150 " + (
+                                        isActive 
+                                        ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
+                                        : 'border-transparent text-gray-600 hover:text-indigo-600 hover:border-gray-300'
+                                    )}
+                                >
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    
+                    {/* ปุ่ม CS Performance ฝั่งขวา */}
+                    <a 
+                        href="https://cs-kpi-management.vercel.app/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="ml-auto mb-2 sm:mb-0 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-bold py-2 px-4 rounded-lg shadow-md transition-all flex items-center gap-2 active:scale-95 border border-blue-400"
+                    >
+                        <span>📊</span>
+                        <span>CS Performance</span>
+                    </a>
                 </div>
+                
                 <div id={"tab-content"}>
                     {renderTabContent()}
                 </div>
