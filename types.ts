@@ -6,13 +6,15 @@ export enum Tab {
     Menu = 'menu',
     Extraction = 'extraction',
     EmailAssistant = 'emailAssistant',
+    Scope = 'scope',
+    Procedure = 'procedure',
     Log = 'log'
 }
 
 export enum AuditType {
-    PostLive = 'post-live',
     Cancellation = 'cancellation',
-    GmbBulk = 'gmb-bulk'
+    GmbBulk = 'gmb-bulk',
+    PostLive = 'post-live'
 }
 
 export interface AnalysisResult {

@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { TabProps, AuditType, AuditResultItem } from '../types';
 import { performAudit, generateRcaSummary } from '../services/geminiService';
@@ -34,7 +35,7 @@ function AuditResultCard({ item }: AuditResultCardProps) {
 }
 
 function AuditSupportTab({ addLog }: TabProps) {
-    const [activeAudit, setActiveAudit] = useState(AuditType.PostLive);
+    const [activeAudit, setActiveAudit] = useState(AuditType.Cancellation);
     const [inputs, setInputs] = useState({ website: '', gmb: '', facebook: '', otherData: '', bulkData: '' });
     const [fileName, setFileName] = useState('No file selected.');
     const [isLoading, setIsLoading] = useState(false);
@@ -77,12 +78,12 @@ function AuditSupportTab({ addLog }: TabProps) {
         setRca(null);
 
         let auditData: any;
-        if (activeAudit === AuditType.PostLive) {
-            auditData = { website: inputs.website, gmb: inputs.gmb, facebook: inputs.facebook, other_data: inputs.otherData };
-        } else if (activeAudit === AuditType.Cancellation) {
+        if (activeAudit === AuditType.Cancellation) {
             auditData = { website: inputs.website, gmb: inputs.gmb };
         } else if (activeAudit === AuditType.GmbBulk) {
             auditData = inputs.bulkData;
+        } else if (activeAudit === AuditType.PostLive) {
+            auditData = { website: inputs.website };
         } else {
             return;
         }
@@ -121,9 +122,9 @@ function AuditSupportTab({ addLog }: TabProps) {
     }, [results, addLog]);
     
     const auditTabs = [
-        { id: AuditType.PostLive, label: '1. POST LIVE Audit' },
-        { id: AuditType.Cancellation, label: '2. Cancellation Audit' },
-        { id: AuditType.GmbBulk, label: '3. GMB Link Audit' },
+        { id: AuditType.Cancellation, label: '1. Cancellation Audit' },
+        { id: AuditType.GmbBulk, label: '2. GMB Link Audit' },
+        { id: AuditType.PostLive, label: '3. POST LIVE Audit' },
     ];
 
     const hasAuditFailures = results !== null && (results as any).some(function(r: any) { return r.status === 'FAIL' || r.status === 'SUSPICIOUS'; });
@@ -149,20 +150,9 @@ function AuditSupportTab({ addLog }: TabProps) {
             </div>
 
             <div className={"p-6 border rounded-lg shadow-md bg-white"}>
-                {activeAudit === AuditType.PostLive && (
-                    <React.Fragment>
-                        <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{"1. POST LIVE Audit Checklist"}</h3>
-                        <div className={"space-y-3"}>
-                            <input type={"url"} name={"website"} value={inputs.website} onChange={handleInputChange} placeholder={"Website URL"} className={"block w-full rounded-md border-gray-300 p-2 border"}/>
-                            <input type={"url"} name={"gmb"} value={inputs.gmb} onChange={handleInputChange} placeholder={"GMB Link"} className={"block w-full rounded-md border-gray-300 p-2 border"}/>
-                            <input type={"url"} name={"facebook"} value={inputs.facebook} onChange={handleInputChange} placeholder={"Facebook Page URL"} className={"block w-full rounded-md border-gray-300 p-2 border"}/>
-                            <textarea name={"otherData"} value={inputs.otherData} onChange={handleInputChange} rows={3} placeholder={"Other Data (e.g., Tax status, Delivery Zone)"} className={"block w-full rounded-md border-gray-300 p-2 border"}></textarea>
-                        </div>
-                    </React.Fragment>
-                )}
                 {activeAudit === AuditType.Cancellation && (
                     <React.Fragment>
-                        <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{"2. Cancellation Audit Checklist"}</h3>
+                        <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{"1. Cancellation Audit Checklist"}</h3>
                         <div className={"space-y-3"}>
                             <input type={"url"} name={"website"} value={inputs.website} onChange={handleInputChange} placeholder={"Website URL"} className={"block w-full rounded-md border-gray-300 p-2 border"}/>
                             <input type={"url"} name={"gmb"} value={inputs.gmb} onChange={handleInputChange} placeholder={"GMB Link"} className={"block w-full rounded-md border-gray-300 p-2 border"}/>
@@ -171,7 +161,7 @@ function AuditSupportTab({ addLog }: TabProps) {
                 )}
                 {activeAudit === AuditType.GmbBulk && (
                     <React.Fragment>
-                        <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{"3. GMB Link Audit"}</h3>
+                        <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{"2. GMB Link Audit"}</h3>
                         <div className={"flex items-center space-x-2"}>
                             <label className={"bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200 w-full flex-grow text-center cursor-pointer"}>
                                 {"\uD83D\uDCE4 Upload CSV/Text File"}
@@ -180,6 +170,15 @@ function AuditSupportTab({ addLog }: TabProps) {
                             <span className={"text-xs text-gray-500 truncate"}>{fileName}</span>
                         </div>
                         <textarea name={"bulkData"} value={inputs.bulkData} onChange={handleInputChange} rows={4} placeholder={"Or paste data here..."} className={"mt-3 block w-full rounded-md border-gray-300 p-2 border"}></textarea>
+                    </React.Fragment>
+                )}
+                {activeAudit === AuditType.PostLive && (
+                    <React.Fragment>
+                        <h3 className={"text-xl font-semibold mb-4 text-indigo-600"}>{"3. POST LIVE Audit Checklist"}</h3>
+                        <div className={"space-y-3"}>
+                            <input type={"url"} name={"website"} value={inputs.website} onChange={handleInputChange} placeholder={"Website URL for Post-Live Check"} className={"block w-full rounded-md border-gray-300 p-2 border"}/>
+                            <p className="text-xs text-gray-500 italic">{"*ระบบจะทำการตรวจสอบพฤติกรรมการใช้งานหน้าเว็บหลังเปิดระบบจริง"}</p>
+                        </div>
                     </React.Fragment>
                 )}
                 <button onClick={runAudit} disabled={isLoading} className={"mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 w-full disabled:bg-indigo-300 flex justify-center items-center"}>
@@ -201,7 +200,7 @@ function AuditSupportTab({ addLog }: TabProps) {
                         )}
                     </div>
 
-                    {(activeAudit === AuditType.Cancellation && hasAuditFailures) && (
+                    {((activeAudit === AuditType.Cancellation || activeAudit === AuditType.PostLive) && hasAuditFailures) && (
                         <div className={"mt-4"}>
                             <button onClick={generateRca} disabled={isRcaLoading} className={"w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md disabled:bg-purple-400 flex justify-center items-center"}>
                                 {isRcaLoading && <LoadingSpinner />}
