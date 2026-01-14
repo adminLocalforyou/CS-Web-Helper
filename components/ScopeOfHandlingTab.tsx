@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ScopeCategory {
     title: string;
@@ -9,7 +9,7 @@ interface ScopeCategory {
     notCapable: string[];
 }
 
-const scopeData: ScopeCategory[] = [
+const DEFAULT_SCOPE: ScopeCategory[] = [
     {
         title: "SHOPPING CART",
         subHeader: "OPENING HOURS",
@@ -91,64 +91,188 @@ const scopeData: ScopeCategory[] = [
 
 function ScopeOfHandlingTab() {
     const [searchTerm, setSearchTerm] = useState("");
+    const [scopes, setScopes] = useState<ScopeCategory[]>([]);
+    const [isManageMode, setIsManageMode] = useState(false);
 
-    const filteredData = scopeData.filter(item => 
+    useEffect(() => {
+        const saved = localStorage.getItem('cs_scope_v2');
+        if (saved) {
+            setScopes(JSON.parse(saved));
+        } else {
+            setScopes(DEFAULT_SCOPE);
+        }
+    }, []);
+
+    const saveScopes = (newScopes: ScopeCategory[]) => {
+        setScopes(newScopes);
+        localStorage.setItem('cs_scope_v2', JSON.stringify(newScopes));
+    };
+
+    const handleUpdateField = (index: number, field: keyof ScopeCategory, value: string) => {
+        const updated = [...scopes];
+        (updated[index] as any)[field] = value;
+        saveScopes(updated);
+    };
+
+    const handleUpdateListItem = (scopeIndex: number, listField: 'capable' | 'notCapable', itemIndex: number, value: string) => {
+        const updated = [...scopes];
+        updated[scopeIndex][listField][itemIndex] = value;
+        saveScopes(updated);
+    };
+
+    const handleAddItem = (scopeIndex: number, listField: 'capable' | 'notCapable') => {
+        const updated = [...scopes];
+        updated[scopeIndex][listField].push("New item...");
+        saveScopes(updated);
+    };
+
+    const handleRemoveItem = (scopeIndex: number, listField: 'capable' | 'notCapable', itemIndex: number) => {
+        const updated = [...scopes];
+        updated[scopeIndex][listField] = updated[scopeIndex][listField].filter((_, i) => i !== itemIndex);
+        saveScopes(updated);
+    };
+
+    const filteredData = scopes.filter(item => 
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
         item.subHeader.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
         <section id="scope" className="animate-in fade-in duration-500">
-            <div className="mb-8">
-                <h2 className="text-3xl font-extrabold text-gray-800 mb-2">Scope of Handling</h2>
-                <p className="text-gray-500">ขอบเขตความรับผิดชอบและขีดความสามารถในการช่วยเหลือลูกค้าของ CS Team</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h2 className="text-3xl font-extrabold text-gray-800 mb-2">Scope of Handling</h2>
+                    <p className="text-gray-500">ขอบเขตความรับผิดชอบและขีดความสามารถในการช่วยเหลือลูกค้าของ CS Team</p>
+                </div>
                 
-                <div className="mt-6 flex max-w-md">
-                    <div className="relative w-full">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
-                        <input 
-                            type="text" 
-                            placeholder="ค้นหาหมวดหมู่ (เช่น Stripe, Billing...)" 
-                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 sm:text-sm shadow-sm transition-all"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                <button 
+                    onClick={() => setIsManageMode(!isManageMode)}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-sm border ${
+                        isManageMode 
+                        ? 'bg-amber-500 text-white border-amber-600 shadow-amber-100' 
+                        : 'bg-white text-slate-400 border-slate-100 hover:border-slate-300'
+                    }`}
+                >
+                    <span>{isManageMode ? '🔓 Manager Mode: On' : '🔒 Manager Mode: Off'}</span>
+                </button>
+            </div>
+
+            <div className="mb-8 flex max-w-md">
+                <div className="relative w-full">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                    <input 
+                        type="text" 
+                        placeholder="ค้นหาหมวดหมู่ (เช่น Stripe, Billing...)" 
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-100 rounded-2xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm shadow-sm transition-all"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredData.map((item, index) => (
-                    <div key={index} className="flex flex-col bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
-                        <div className={`h-12 flex flex-col justify-center px-4 ${item.color}`}>
-                            <h3 className="text-white font-black text-sm tracking-tighter uppercase">{item.title}</h3>
-                            <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">{item.subHeader}</p>
+                {filteredData.map((item, scopeIdx) => (
+                    <div key={scopeIdx} className="flex flex-col bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow group/card">
+                        <div className={`min-h-[4rem] flex flex-col justify-center px-5 py-3 ${item.color} relative`}>
+                            {isManageMode ? (
+                                <div className="space-y-1">
+                                    <input 
+                                        className="w-full bg-black/10 text-white font-black text-sm tracking-tighter uppercase px-2 py-0.5 rounded outline-none placeholder:text-white/50"
+                                        value={item.title}
+                                        onChange={(e) => handleUpdateField(scopeIdx, 'title', e.target.value)}
+                                        placeholder="Title"
+                                    />
+                                    <input 
+                                        className="w-full bg-black/10 text-white/80 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded outline-none placeholder:text-white/40"
+                                        value={item.subHeader}
+                                        onChange={(e) => handleUpdateField(scopeIdx, 'subHeader', e.target.value)}
+                                        placeholder="Sub-Header"
+                                    />
+                                </div>
+                            ) : (
+                                <>
+                                    <h3 className="text-white font-black text-sm tracking-tighter uppercase">{item.title}</h3>
+                                    <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">{item.subHeader}</p>
+                                </>
+                            )}
                         </div>
                         
-                        <div className="flex-1 p-5 space-y-4">
+                        <div className="flex-1 p-6 space-y-6">
+                            {/* Capable List */}
                             <div>
-                                <h4 className="text-[11px] font-black text-green-600 uppercase mb-2 tracking-widest flex items-center">
-                                    <span className="mr-2">✅</span> CAPABLE OF
+                                <h4 className="text-[11px] font-black text-green-600 uppercase mb-3 tracking-widest flex items-center justify-between">
+                                    <span className="flex items-center"><span className="mr-2">✅</span> CAPABLE OF</span>
+                                    {isManageMode && (
+                                        <button 
+                                            onClick={() => handleAddItem(scopeIdx, 'capable')}
+                                            className="text-[10px] bg-green-50 px-2 py-0.5 rounded hover:bg-green-100 transition-colors"
+                                        >
+                                            + Add
+                                        </button>
+                                    )}
                                 </h4>
-                                <ul className="space-y-2">
+                                <ul className="space-y-2.5">
                                     {item.capable.map((text, i) => (
-                                        <li key={i} className="text-xs text-gray-700 leading-relaxed pl-4 relative">
-                                            <span className="absolute left-0 top-1.5 w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                                            {text}
+                                        <li key={i} className="group/item relative pl-5">
+                                            <span className="absolute left-0 top-2 w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                                            {isManageMode ? (
+                                                <div className="flex gap-2">
+                                                    <textarea 
+                                                        className="flex-1 text-xs text-gray-700 leading-relaxed bg-slate-50 border border-slate-100 rounded px-2 py-1 outline-none focus:border-green-300 transition-all"
+                                                        value={text}
+                                                        onChange={(e) => handleUpdateListItem(scopeIdx, 'capable', i, e.target.value)}
+                                                        rows={1}
+                                                    />
+                                                    <button 
+                                                        onClick={() => handleRemoveItem(scopeIdx, 'capable', i)}
+                                                        className="text-red-300 hover:text-red-500 font-bold px-1"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-gray-700 leading-relaxed font-medium">{text}</span>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
 
-                            <div className="pt-4 border-t border-gray-50">
-                                <h4 className="text-[11px] font-black text-red-600 uppercase mb-2 tracking-widest flex items-center">
-                                    <span className="mr-2">❌</span> NOT CAPABLE OF
+                            {/* Not Capable List */}
+                            <div className="pt-5 border-t border-slate-50">
+                                <h4 className="text-[11px] font-black text-red-600 uppercase mb-3 tracking-widest flex items-center justify-between">
+                                    <span className="flex items-center"><span className="mr-2">❌</span> NOT CAPABLE OF</span>
+                                    {isManageMode && (
+                                        <button 
+                                            onClick={() => handleAddItem(scopeIdx, 'notCapable')}
+                                            className="text-[10px] bg-red-50 px-2 py-0.5 rounded hover:bg-red-100 transition-colors"
+                                        >
+                                            + Add
+                                        </button>
+                                    )}
                                 </h4>
-                                <ul className="space-y-2">
+                                <ul className="space-y-2.5">
                                     {item.notCapable.map((text, i) => (
-                                        <li key={i} className="text-xs text-gray-500 leading-relaxed pl-4 relative italic">
-                                            <span className="absolute left-0 top-1.5 w-1.5 h-1.5 bg-red-300 rounded-full"></span>
-                                            {text}
+                                        <li key={i} className="group/item relative pl-5">
+                                            <span className="absolute left-0 top-2 w-1.5 h-1.5 bg-red-300 rounded-full"></span>
+                                            {isManageMode ? (
+                                                <div className="flex gap-2">
+                                                    <textarea 
+                                                        className="flex-1 text-xs text-gray-500 italic leading-relaxed bg-slate-50 border border-slate-100 rounded px-2 py-1 outline-none focus:border-red-200 transition-all"
+                                                        value={text}
+                                                        onChange={(e) => handleUpdateListItem(scopeIdx, 'notCapable', i, e.target.value)}
+                                                        rows={1}
+                                                    />
+                                                    <button 
+                                                        onClick={() => handleRemoveItem(scopeIdx, 'notCapable', i)}
+                                                        className="text-red-200 hover:text-red-400 font-bold px-1"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-gray-500 leading-relaxed font-medium italic">{text}</span>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>
@@ -158,8 +282,9 @@ function ScopeOfHandlingTab() {
                 ))}
                 
                 {filteredData.length === 0 && (
-                    <div className="col-span-full py-20 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                        <p className="text-gray-400 font-bold">ไม่พบหมวดหมู่ที่ต้องการค้นหา</p>
+                    <div className="col-span-full py-24 text-center bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-100">
+                        <p className="text-slate-400 font-black text-xl">ไม่พบหมวดหมู่ที่ต้องการค้นหา</p>
+                        <button onClick={() => setSearchTerm("")} className="mt-4 text-indigo-600 font-bold underline">ล้างการค้นหา</button>
                     </div>
                 )}
             </div>
