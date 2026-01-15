@@ -40,16 +40,37 @@ function App() {
         return null;
     };
 
-    const mainTabs = [
+    const row1Tabs = [
         { id: Tab.Delivery, label: 'IHD Solution', icon: '🚚' },
         { id: Tab.Menu, label: 'Menu Cross-Check', icon: '📋' },
         { id: Tab.Extraction, label: 'AI Scan Text', icon: '🔍' },
+        { id: Tab.InputAI, label: 'Input AI', icon: '🤖' },
+    ];
+
+    const row2Tabs = [
         { id: Tab.Analysis, label: 'Analysis', icon: '📈' },
         { id: Tab.Audit, label: 'Audit', icon: '⚖️' },
         { id: Tab.EmailAssistant, label: 'Emails', icon: '✉️' },
-        { id: Tab.InputAI, label: 'Input AI', icon: '🤖' },
         { id: Tab.Log, label: 'Logs', icon: '📜' },
     ];
+
+    const renderTabButton = (tab: { id: Tab, label: string, icon: string }) => {
+        const isActive = (activeTab === tab.id);
+        return (
+            <button
+                key={tab.id}
+                onClick={function() { setActiveTab(tab.id); }}
+                className={"flex items-center gap-2 px-5 py-3 text-[12.5px] font-black border-b-2 transition-all duration-200 " + (
+                    isActive 
+                    ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' 
+                    : 'border-transparent text-slate-400 hover:text-indigo-600 hover:bg-slate-50'
+                )}
+            >
+                <span className="text-base">{tab.icon}</span>
+                <span className="uppercase tracking-tight">{tab.label}</span>
+            </button>
+        );
+    };
 
     return (
         <div className={"p-4 sm:p-8 bg-slate-50 min-h-screen"}>
@@ -100,36 +121,33 @@ function App() {
 
                 <div className="h-px bg-slate-100 w-full mb-6"></div>
 
-                <div className={"flex flex-wrap items-center border-b border-gray-100 mb-8 gap-2"}>
-                    <div className={"flex flex-wrap flex-grow"}>
-                        {mainTabs.map(function(tab) {
-                            const isActive = (activeTab === tab.id);
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={function() { setActiveTab(tab.id); }}
-                                    className={"flex items-center gap-2 px-5 py-4 text-[13px] font-bold border-b-2 transition duration-150 " + (
-                                        isActive 
-                                        ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' 
-                                        : 'border-transparent text-slate-500 hover:text-indigo-600 hover:bg-slate-50/50'
-                                    )}
-                                >
-                                    <span>{tab.icon}</span>
-                                    <span>{tab.label}</span>
-                                </button>
-                            );
-                        })}
+                <div className="flex flex-col mb-8 border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                    {/* Row 1: Primary Operation Tools */}
+                    <div className="flex flex-wrap items-center bg-white border-b border-slate-50">
+                        <div className="flex flex-wrap flex-grow">
+                            {row1Tabs.map(renderTabButton)}
+                        </div>
+                        
+                        <a 
+                            href="https://cs-kpi-management.vercel.app/" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="mr-4 my-2 sm:my-0 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-black py-2 px-4 rounded-lg shadow-md transition-all flex items-center gap-2 active:scale-95 uppercase tracking-wider"
+                        >
+                            <span>📊</span>
+                            <span>CS Performance</span>
+                        </a>
                     </div>
-                    
-                    <a 
-                        href="https://cs-kpi-management.vercel.app/" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="ml-auto mb-2 sm:mb-0 bg-blue-500 hover:bg-blue-600 text-white text-[11px] font-black py-2.5 px-6 rounded-xl shadow-lg transition-all flex items-center gap-2 active:scale-95 uppercase tracking-wider"
-                    >
-                        <span>📊</span>
-                        <span>CS Performance</span>
-                    </a>
+
+                    {/* Row 2: Secondary / Analysis Tools */}
+                    <div className="flex flex-wrap items-center bg-slate-50/30">
+                        <div className="flex flex-wrap flex-grow">
+                            {row2Tabs.map(renderTabButton)}
+                        </div>
+                        <div className="px-5 text-[10px] text-slate-300 font-bold uppercase tracking-widest hidden lg:block">
+                            Advanced Tools & History
+                        </div>
+                    </div>
                 </div>
                 
                 <div id={"tab-content"}>
