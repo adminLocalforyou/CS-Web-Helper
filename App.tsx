@@ -8,12 +8,13 @@ import AuditSupportTab from './components/AuditSupportTab';
 import MenuCheckTab from './components/MenuCheckTab';
 import ExtractionTab from './components/ExtractionTab';
 import EmailAssistantTab from './components/EmailAssistantTab';
+import InputAITab from './components/InputAITab';
 import ScopeOfHandlingTab from './components/ScopeOfHandlingTab';
 import ProcedureTab from './components/ProcedureTab';
+import LinksAndTemplatesTab from './components/LinksAndTemplatesTab';
 import LogsTab from './components/LogsTab';
 
 function App() {
-    // เปลี่ยนค่าเริ่มต้นเป็น Tab.Scope (Scope of Handling)
     const [activeTab, setActiveTab] = useState(Tab.Scope);
     const [logs, setLogs] = useState<LogEntry[]>([]);
 
@@ -31,8 +32,10 @@ function App() {
         if (activeTab === Tab.Menu) { return <MenuCheckTab addLog={addLog} />; }
         if (activeTab === Tab.Extraction) { return <ExtractionTab addLog={addLog} />; }
         if (activeTab === Tab.EmailAssistant) { return <EmailAssistantTab addLog={addLog} />; }
+        if (activeTab === Tab.InputAI) { return <InputAITab addLog={addLog} />; }
         if (activeTab === Tab.Scope) { return <ScopeOfHandlingTab />; }
         if (activeTab === Tab.Procedure) { return <ProcedureTab />; }
+        if (activeTab === Tab.LinksTemplates) { return <LinksAndTemplatesTab />; }
         if (activeTab === Tab.Log) { return <LogsTab logs={logs} />; }
         return null;
     };
@@ -44,6 +47,7 @@ function App() {
         { id: Tab.Analysis, label: 'Analysis', icon: '📈' },
         { id: Tab.Audit, label: 'Audit', icon: '⚖️' },
         { id: Tab.EmailAssistant, label: 'Emails', icon: '✉️' },
+        { id: Tab.InputAI, label: 'Input AI', icon: '🤖' },
         { id: Tab.Log, label: 'Logs', icon: '📜' },
     ];
 
@@ -52,7 +56,6 @@ function App() {
             <Header />
             <main className={"max-w-7xl mx-auto bg-white rounded-xl shadow-2xl p-4 sm:p-8"}>
                 
-                {/* --- Tier 1: Resource Center (Top Row) --- */}
                 <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
                     <div className="flex flex-wrap gap-3">
                         <button
@@ -77,6 +80,17 @@ function App() {
                             <span className={activeTab === Tab.Procedure ? "filter brightness-0 invert" : ""}>📋</span>
                             <span>CS PROCEDURE HUB</span>
                         </button>
+                        <button
+                            onClick={() => setActiveTab(Tab.LinksTemplates)}
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl border-2 font-black text-[12px] tracking-wide transition-all duration-200 transform hover:-translate-y-0.5 shadow-sm active:scale-95 ${
+                                activeTab === Tab.LinksTemplates 
+                                ? 'bg-violet-600 border-violet-600 text-white shadow-violet-200 shadow-lg' 
+                                : 'bg-white border-slate-100 text-slate-500 hover:border-violet-100 hover:bg-slate-50'
+                            }`}
+                        >
+                            <span className={activeTab === Tab.LinksTemplates ? "filter brightness-0 invert" : ""}>🔗</span>
+                            <span>ALL LINKS & TEMPLATE</span>
+                        </button>
                     </div>
                     
                     <div className="text-slate-300 font-black text-[11px] uppercase tracking-[0.2em] hidden md:block">
@@ -84,10 +98,8 @@ function App() {
                     </div>
                 </div>
 
-                {/* Divider Line */}
                 <div className="h-px bg-slate-100 w-full mb-6"></div>
 
-                {/* --- Tier 2: Operational Tabs & Performance Button --- */}
                 <div className={"flex flex-wrap items-center border-b border-gray-100 mb-8 gap-2"}>
                     <div className={"flex flex-wrap flex-grow"}>
                         {mainTabs.map(function(tab) {

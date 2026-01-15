@@ -6,8 +6,10 @@ export enum Tab {
     Menu = 'menu',
     Extraction = 'extraction',
     EmailAssistant = 'emailAssistant',
+    InputAI = 'inputAI',
     Scope = 'scope',
     Procedure = 'procedure',
+    LinksTemplates = 'linksTemplates',
     Log = 'log'
 }
 
