@@ -365,9 +365,10 @@ function ProcedureTab() {
     const [isManageMode, setIsManageMode] = useState(false);
     const [viewMode, setViewMode] = useState<'cards' | 'grid'>('cards');
 
+    const colors = ['indigo', 'emerald', 'sky', 'rose', 'amber', 'violet', 'slate'];
+
     useEffect(() => {
-        // Changed key to v3 to force update from new DEFAULT_PROCEDURES
-        const saved = localStorage.getItem('cs_procedures_v3');
+        const saved = localStorage.getItem('cs_procedures_v4');
         if (saved) {
             setProcedures(JSON.parse(saved));
         } else {
@@ -377,7 +378,7 @@ function ProcedureTab() {
 
     const saveProcedures = (newProcedures: Procedure[]) => {
         setProcedures(newProcedures);
-        localStorage.setItem('cs_procedures_v3', JSON.stringify(newProcedures));
+        localStorage.setItem('cs_procedures_v4', JSON.stringify(newProcedures));
     };
 
     const handleUpdateStep = (id: string, stepIndex: number, value: string) => {
@@ -418,6 +419,27 @@ function ProcedureTab() {
         saveProcedures(updated);
     };
 
+    const handleUpdateColor = (id: string, newColor: string) => {
+        const updated = procedures.map(p => p.id === id ? { ...p, color: newColor } : p);
+        saveProcedures(updated);
+    };
+
+    const handleAddCategory = () => {
+        const newCat: Procedure = {
+            id: Date.now().toString(),
+            title: "New Procedure Group",
+            color: "slate",
+            steps: ["First procedure step..."]
+        };
+        saveProcedures([...procedures, newCat]);
+    };
+
+    const handleDeleteCategory = (id: string) => {
+        if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบหมวดหมู่นี้ทั้งหมด?")) {
+            saveProcedures(procedures.filter(p => p.id !== id));
+        }
+    };
+
     const filteredProcedures = procedures.filter(p => 
         p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.steps.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -444,11 +466,11 @@ function ProcedureTab() {
                         CS Procedure Hub
                     </h1>
                     <p className="text-slate-500 font-medium mt-1">
-                        ✨ ขั้นตอนการทำงานมาตรฐานสำหรับทีม CS (ข้อมูลอัปเดตครบถ้วน)
+                        ✨ ขั้นตอนการทำงานมาตรฐานสำหรับทีม CS (จัดการข้อมูลได้อิสระ)
                     </p>
                 </div>
                 
-                <div className="flex items-center bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+                <div className="flex flex-wrap items-center bg-white p-1 rounded-xl shadow-sm border border-slate-100 gap-1">
                     <button 
                         onClick={() => setViewMode('cards')}
                         className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'cards' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
@@ -461,7 +483,7 @@ function ProcedureTab() {
                     >
                         <span>📊 Table Grid</span>
                     </button>
-                    <div className="w-px h-6 bg-slate-200 mx-2"></div>
+                    <div className="w-px h-6 bg-slate-200 mx-1"></div>
                     <button 
                         onClick={() => setIsManageMode(!isManageMode)}
                         className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${isManageMode ? 'bg-amber-500 text-white shadow-md' : 'text-slate-400 border border-transparent hover:border-slate-200'}`}
@@ -492,13 +514,34 @@ function ProcedureTab() {
                         const style = getColorClasses(item.color);
                         return (
                             <div key={item.id} className="bg-white rounded-[2.5rem] shadow-[0_10px_30px_-5px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden flex flex-col hover:shadow-2xl transition-all hover:-translate-y-1">
-                                <div className={`p-6 border-b-2 ${style.bg} ${style.border}`}>
+                                <div className={`p-6 border-b-2 ${style.bg} ${style.border} relative group/header`}>
                                     {isManageMode ? (
-                                        <input 
-                                            className="w-full bg-transparent font-black text-xl outline-none focus:border-b border-indigo-300"
-                                            value={item.title}
-                                            onChange={(e) => handleUpdateTitle(item.id, e.target.value)}
-                                        />
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-start gap-2">
+                                                <input 
+                                                    className="w-full bg-white/50 p-2 font-black text-lg outline-none rounded-lg border border-transparent focus:border-indigo-300"
+                                                    value={item.title}
+                                                    onChange={(e) => handleUpdateTitle(item.id, e.target.value)}
+                                                />
+                                                <button 
+                                                    onClick={() => handleDeleteCategory(item.id)}
+                                                    className="text-red-400 hover:text-red-600 p-2 bg-white rounded-lg shadow-sm"
+                                                    title="Delete Category"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                {colors.map(c => (
+                                                    <button
+                                                        key={c}
+                                                        onClick={() => handleUpdateColor(item.id, c)}
+                                                        className={`w-6 h-6 rounded-full border-2 transition-all ${item.color === c ? 'border-slate-800 scale-110' : 'border-transparent opacity-50'}`}
+                                                        style={{ backgroundColor: c === 'slate' ? '#94a3b8' : c }}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
                                     ) : (
                                         <h3 className={`text-xl font-black ${style.text} tracking-tight`}>{item.title}</h3>
                                     )}
@@ -525,7 +568,7 @@ function ProcedureTab() {
                                                             onClick={() => handleDeleteStep(item.id, idx)}
                                                             className="text-[9px] font-bold text-red-500 hover:text-red-700 uppercase"
                                                         >
-                                                            [ Remove ]
+                                                            [ Remove Step ]
                                                         </button>
                                                     </div>
                                                 ) : (
@@ -549,6 +592,22 @@ function ProcedureTab() {
                             </div>
                         );
                     })}
+
+                    {/* Add Category Button Card */}
+                    {isManageMode && (
+                        <button 
+                            onClick={handleAddCategory}
+                            className="group bg-slate-50 rounded-[2.5rem] border-4 border-dashed border-slate-200 p-8 flex flex-col items-center justify-center gap-4 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-300 min-h-[300px]"
+                        >
+                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform">
+                                ➕
+                            </div>
+                            <div className="text-center">
+                                <h3 className="font-black text-slate-500 group-hover:text-indigo-600">Add New Category</h3>
+                                <p className="text-xs text-slate-400 font-bold uppercase mt-1">เพิ่มหมวดหมู่ใหม่ต่อท้าย</p>
+                            </div>
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
